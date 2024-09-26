@@ -28,7 +28,11 @@ func New(token string) Client {
 func (c *Client) SendMessage(chatId string, text string) (Message, error) {
 
 	var responseObject Message
-	responseBytes, err := c.sendRequest("sendMessage", chatId, text)
+	data, _ := json.Marshal(map[string]string{
+		"chat_id": chatId,
+		"text":    text,
+	})
+	responseBytes, err := c.sendRequest("sendMessage", data)
 	if err != nil {
 		return responseObject, fmt.Errorf("send message failed: %w", err)
 	}
@@ -42,19 +46,14 @@ func (c *Client) SendMessage(chatId string, text string) (Message, error) {
 	return responseObject, nil
 }
 
-func (c *Client) sendRequest(method string, chatId string, text string) (responseBytes []byte, err error) {
-	body, _ := json.Marshal(map[string]string{
-		"chat_id": chatId,
-		"text":    text,
-	})
-
+func (c *Client) sendRequest(method string, data []byte) (responseBytes []byte, err error) {
 	u := url.URL{
 		Scheme: "https",
 		Host:   c.host,
 		Path:   path.Join(c.basePath, method),
 	}
 
-	response, err := c.client.Post(u.String(), "application/json", bytes.NewReader(body))
+	response, err := c.client.Post(u.String(), "application/json", bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
