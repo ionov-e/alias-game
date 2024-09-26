@@ -12,16 +12,14 @@ import (
 )
 
 type Client struct {
-	host     string
-	basePath string
-	client   http.Client
+	token  string
+	client http.Client
 }
 
 func New(token string) Client {
 	return Client{
-		host:     "api.telegram.org",
-		basePath: "bot" + token,
-		client:   http.Client{},
+		token:  token,
+		client: http.Client{},
 	}
 }
 
@@ -49,8 +47,8 @@ func (c *Client) SendMessage(chatId string, text string) (Message, error) {
 func (c *Client) sendRequest(method string, data []byte) (responseBytes []byte, err error) {
 	u := url.URL{
 		Scheme: "https",
-		Host:   c.host,
-		Path:   path.Join(c.basePath, method),
+		Host:   "api.telegram.org",
+		Path:   path.Join("bot"+c.token, method),
 	}
 
 	response, err := c.client.Post(u.String(), "application/json", bytes.NewReader(data))
