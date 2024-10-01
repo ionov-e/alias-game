@@ -23,9 +23,9 @@ func New(token string) Client {
 	}
 }
 
-func (c *Client) SendMessage(chatId string, text string) (Message, error) {
+func (c *Client) SendMessage(chatId string, text string) (MessageResponse, error) {
 
-	var responseObject Message
+	var responseObject MessageResponse
 	data, _ := json.Marshal(map[string]string{
 		"chat_id": chatId,
 		"text":    text,
