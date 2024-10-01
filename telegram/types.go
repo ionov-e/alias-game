@@ -2,12 +2,17 @@ package telegram
 
 // MessageResponse https://core.telegram.org/bots/api#sendmessage
 type MessageResponse struct {
-	Ok      bool    `json:"ok"`
-	Message Message `json:"result"`
+	Ok     bool    `json:"ok"`
+	Result Message `json:"result"`
 }
 
-// UpdateResponse https://core.telegram.org/bots/api#update
 type UpdateResponse struct {
+	Ok     bool     `json:"ok"`
+	Result []Update `json:"result"`
+}
+
+// Update https://core.telegram.org/bots/api#update
+type Update struct {
 	UpdateID int `json:"update_id"`
 	// Optional: new incoming message of any kind - text, photo, sticker, etc.
 	Message Message `json:"message"`

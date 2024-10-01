@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 )
 
 type Client struct {
@@ -42,6 +43,28 @@ func (c *Client) SendMessage(chatId string, text string) (MessageResponse, error
 	}
 
 	return responseObject, nil
+}
+
+// GetUpdates https://core.telegram.org/bots/api#getupdates
+func (c *Client) GetUpdates(chatId string, offset int, limit int) ([]Update, error) {
+	var responseObject UpdateResponse
+	data, _ := json.Marshal(map[string]string{
+		"chat_id": chatId,
+		"offset":  strconv.Itoa(offset),
+		"limit":   strconv.Itoa(limit),
+	})
+	responseBytes, err := c.sendRequest("getUpdates", data)
+	if err != nil {
+		return responseObject.Result, fmt.Errorf("get updates failed: %w", err)
+	}
+
+	err = json.Unmarshal(responseBytes, &responseObject)
+	if err != nil {
+		log.Println(err)
+		return responseObject.Result, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return responseObject.Result, nil
 }
 
 func (c *Client) sendRequest(method string, data []byte) (responseBytes []byte, err error) {
