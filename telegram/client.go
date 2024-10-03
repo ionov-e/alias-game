@@ -24,11 +24,11 @@ func New(token string) Client {
 	}
 }
 
-func (c *Client) SendMessage(chatId string, text string) (MessageResponse, error) {
+func (c *Client) SendMessage(chatId int64, text string) (MessageResponse, error) {
 
 	var responseObject MessageResponse
 	data, _ := json.Marshal(map[string]string{
-		"chat_id": chatId,
+		"chat_id": strconv.FormatInt(chatId, 10),
 		"text":    text,
 	})
 	responseBytes, err := c.sendRequest("sendMessage", data)
@@ -46,12 +46,12 @@ func (c *Client) SendMessage(chatId string, text string) (MessageResponse, error
 }
 
 // GetUpdates https://core.telegram.org/bots/api#getupdates
-func (c *Client) GetUpdates(chatId string, offset int, limit int) ([]Update, error) {
+func (c *Client) GetUpdates(offset uint64, limit int, timeout int) ([]Update, error) {
 	var responseObject UpdateResponse
 	data, _ := json.Marshal(map[string]string{
-		"chat_id": chatId,
-		"offset":  strconv.Itoa(offset),
+		"offset":  strconv.FormatUint(offset, 10),
 		"limit":   strconv.Itoa(limit),
+		"timeout": strconv.Itoa(timeout),
 	})
 	responseBytes, err := c.sendRequest("getUpdates", data)
 	if err != nil {

@@ -12,17 +12,26 @@ import (
 func main() {
 	mustSetUpLogging()
 	telegramClient := telegram.New(mustToken())
-	chatId := "-4594910803"
-	_, err := telegramClient.SendMessage(chatId, "Hello World!")
-	if err != nil {
-		log.Fatal(err)
-	}
-	updates, err := telegramClient.GetUpdates(chatId, 0, 10)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if len(updates) > 0 {
-		log.Println(updates[0].Message.Text)
+	lastUpdateID := uint64(0)
+
+	for {
+		updates, err := telegramClient.GetUpdates(lastUpdateID, 10, 0)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, update := range updates {
+			if update.UpdateID == lastUpdateID {
+				continue
+			}
+
+			lastUpdateID = update.UpdateID
+
+			_, err := telegramClient.SendMessage(update.Message.Chat.ID, update.Message.Text)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		time.Sleep(time.Second * 5)
 	}
 }
 

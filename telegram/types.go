@@ -13,7 +13,7 @@ type UpdateResponse struct {
 
 // Update https://core.telegram.org/bots/api#update
 type Update struct {
-	UpdateID int `json:"update_id"`
+	UpdateID uint64 `json:"update_id"`
 	// Optional: new incoming message of any kind - text, photo, sticker, etc.
 	Message Message `json:"message"`
 	// Optional: new message from a connected business account
@@ -23,13 +23,13 @@ type Update struct {
 // Message https://core.telegram.org/bots/api#message
 type Message struct {
 	// unique message identifier inside this chat
-	MessageID int `json:"message_id"`
+	MessageID int64 `json:"message_id"`
 	// the message belongs to
 	Chat Chat `json:"chat"`
 	// Optional: sender of the message; may be empty for messages sent to channels.
 	User User `json:"from"`
 	// Optional: the message was sent in Unix time. It is always a positive number, representing a valid date
-	Date int `json:"date"`
+	Date uint32 `json:"date"`
 	// Optional
 	Text          string            `json:"text"`
 	Entities      []MessageEntity   `json:"entities"`
@@ -54,7 +54,7 @@ type Message struct {
 // Chat https://core.telegram.org/bots/api#chat
 type Chat struct {
 	// Unique identifier for this chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 	// Type of the chat, can be either “private”, “group”, “supergroup” or “channel”
 	Type string `json:"type"`
 	// Optional: for private chats, supergroups and channels if available
@@ -63,7 +63,11 @@ type Chat struct {
 
 // User https://core.telegram.org/bots/api#user
 type User struct {
-	ID int `json:"id"`
+	ID        int64  `json:"id"`
+	IsBot     bool   `json:"is_bot"`
+	FirstName string `json:"first_name"`
+	// Optional: IETF language tag
+	Language string `json:"language_code"`
 }
 
 // MessageEntity https://core.telegram.org/bots/api#messageentity
@@ -79,27 +83,27 @@ type ExternalReplyInfo struct {
 	// Optional: chat the original message belongs to. Available only if the chat is a supergroup or a channel
 	Chat Chat `json:"chat"`
 	// Optional: Unique message identifier inside the original chat. Available only if the original chat is a supergroup or a channel
-	MessageId int `json:"message_id"`
+	MessageId uint64 `json:"message_id"`
 }
 
 // MessageOrigin https://core.telegram.org/bots/api#messageorigin
 type MessageOrigin struct {
 	Type string `json:"type"`
-	Date int    `json:"date"`
+	Date uint32 `json:"date"`
 }
 
 // PhotoSize https://core.telegram.org/bots/api#photosize
 type PhotoSize struct {
 	FileID   string `json:"file_id"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
-	FileSize int    `json:"file_size"`
+	Width    uint32 `json:"width"`
+	Height   uint32 `json:"height"`
+	FileSize uint32 `json:"file_size"`
 }
 
 // Audio https://core.telegram.org/bots/api#audio
 type Audio struct {
 	FileID   string `json:"file_id"`
-	Duration int    `json:"duration"`
+	Duration uint32 `json:"duration"`
 }
 
 // Document https://core.telegram.org/bots/api#document
@@ -110,22 +114,22 @@ type Document struct {
 // Video https://core.telegram.org/bots/api#video
 type Video struct {
 	FileID   string `json:"file_id"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
-	Duration int    `json:"duration"`
+	Width    uint32 `json:"width"`
+	Height   uint32 `json:"height"`
+	Duration uint32 `json:"duration"`
 }
 
 // VideoNote https://core.telegram.org/bots/api#videonote
 type VideoNote struct {
 	FileID   string `json:"file_id"`
-	Length   int    `json:"length"`
-	Duration int    `json:"duration"`
+	Length   uint32 `json:"length"`
+	Duration uint32 `json:"duration"`
 }
 
 // Voice https://core.telegram.org/bots/api#voice
 type Voice struct {
 	FileID   string `json:"file_id"`
-	Duration int    `json:"duration"`
+	Duration uint32 `json:"duration"`
 }
 
 // Contact https://core.telegram.org/bots/api#contact
@@ -144,22 +148,22 @@ type Location struct {
 // Sticker https://core.telegram.org/bots/api#sticker
 type Sticker struct {
 	FileID   string `json:"file_id"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
-	FileSize int    `json:"file_size"`
+	Width    uint32 `json:"width"`
+	Height   uint32 `json:"height"`
+	FileSize uint32 `json:"file_size"`
 }
 
 // Animation https://core.telegram.org/bots/api#animation
 type Animation struct {
 	FileID   string `json:"file_id"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
-	Duration int    `json:"duration"`
+	Width    uint32 `json:"width"`
+	Height   uint32 `json:"height"`
+	Duration uint32 `json:"duration"`
 }
 
 // Story https://core.telegram.org/bots/api#story
 type Story struct {
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 }
 
 // Dice https://core.telegram.org/bots/api#dice
