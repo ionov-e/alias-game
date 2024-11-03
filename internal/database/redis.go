@@ -5,24 +5,31 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"go_telegram_start/database/types"
-	"go_telegram_start/telegram"
+	"go_telegram_start/internal/database/types"
+	"go_telegram_start/pkg/telegram"
 	"strconv"
 	"time"
 )
 
-type DB struct {
-	rc *RedisClient
+type Redis struct {
+	rc *redis.Client
 }
 
-func NewLocal() *DB {
-	return &DB{NewClientLocal()}
+func NewLocalRedis() *Redis {
+	options := &redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default Redis
+	}
+	return &Redis{
+		rc: redis.NewClient(options),
+	}
 }
 
-func (db *DB) GetOrCreateUserInfo(ctx context.Context, user telegram.User) (types.UserInfo, error) {
+func (r *Redis) GetOrCreateUserInfoFromTelegramUser(ctx context.Context, user telegram.User) (types.UserInfo, error) {
 	var userInfo types.UserInfo
 	key := strconv.FormatInt(user.ID, 10)
-	err := db.rc.Get(ctx, key).Scan(&userInfo)
+	err := r.rc.Get(ctx, key).Scan(&userInfo)
 
 	if !errors.Is(err, redis.Nil) {
 		return userInfo, nil
@@ -34,7 +41,7 @@ func (db *DB) GetOrCreateUserInfo(ctx context.Context, user telegram.User) (type
 		LastRequestTime:    time.Now(),
 		PreferenceLanguage: user.LanguageWithDefault(),
 	}
-	err = db.rc.Set(ctx, key, newUserInfo, 0).Err()
+	err = r.rc.Set(ctx, key, newUserInfo, 0).Err()
 
 	if err != nil {
 		return newUserInfo, fmt.Errorf("setting key %s in redis for updating userInfo failed: %w", key, err)
@@ -43,7 +50,7 @@ func (db *DB) GetOrCreateUserInfo(ctx context.Context, user telegram.User) (type
 	return newUserInfo, nil
 }
 
-func (db *DB) UpdateUserInfo(ctx context.Context, userInfo types.UserInfo) error {
+func (r *Redis) UpdateUserInfo(ctx context.Context, userInfo types.UserInfo) error {
 	key := strconv.FormatInt(userInfo.TelegramID, 10)
 
 	data, err := userInfo.MarshalBinary()
@@ -51,7 +58,7 @@ func (db *DB) UpdateUserInfo(ctx context.Context, userInfo types.UserInfo) error
 		return fmt.Errorf("marshal UserInfo failed: %w", err)
 	}
 
-	err = db.rc.Set(ctx, key, data, 0).Err()
+	err = r.rc.Set(ctx, key, data, 0).Err()
 	if err != nil {
 		return fmt.Errorf("setting key %s in redis for updating userInfo failed: %w", key, err)
 	}

@@ -3,27 +3,27 @@ package alias
 import (
 	"context"
 	"fmt"
-	"go_telegram_start/database"
-	"go_telegram_start/telegram"
+	"go_telegram_start/internal/database"
+	"go_telegram_start/pkg/telegram"
 	"time"
 )
 
 type Game struct {
 	telegram.Update
 	telegram.Client
-	*database.DB
+	database.DB
 }
 
-func NewGame(update telegram.Update, client telegram.Client, database *database.DB) Game {
+func New(update telegram.Update, client telegram.Client, db database.DB) Game {
 	return Game{
 		Update: update,
 		Client: client,
-		DB:     database,
+		DB:     db,
 	}
 }
 
 func (g *Game) Respond(ctx context.Context) error {
-	userInfo, err := g.DB.GetOrCreateUserInfo(ctx, g.Update.Message.User)
+	userInfo, err := g.DB.GetOrCreateUserInfoFromTelegramUser(ctx, g.Update.Message.User)
 	if err != nil {
 		return fmt.Errorf("error getting userInfo: %w", err)
 	}
