@@ -15,7 +15,7 @@ func Run(botToken string) error {
 	telegramClient := telegram.New(botToken)
 	storage := database.NewLocalRedis()
 	ctx := context.Background()
-	offsetAsUpdateID, err := storage.GetLastUpdateID(ctx)
+	offsetAsUpdateID, err := storage.LastUpdateID(ctx)
 	if err != nil {
 		return fmt.Errorf("failed at getting lastUpdateID: %w", err)
 	}
@@ -28,7 +28,7 @@ func Run(botToken string) error {
 		if len(updates) > 0 {
 			offsetAsUpdateID = updates[len(updates)-1].UpdateID + 1 // Adds 1 to get the next update
 
-			if err := storage.SetLastUpdateID(ctx, offsetAsUpdateID); err != nil {
+			if err := storage.SaveLastUpdateID(ctx, offsetAsUpdateID); err != nil {
 				return fmt.Errorf("failed at setting lastUpdateID: %w", err)
 			}
 		}

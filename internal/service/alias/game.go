@@ -23,7 +23,7 @@ func New(update telegram.Update, client telegram.Client, db database.DB) Game {
 }
 
 func (g *Game) Respond(ctx context.Context) error {
-	userInfo, err := g.DB.GetOrCreateUserInfoFromTelegramUser(ctx, g.Update.Message.User)
+	userInfo, err := g.DB.UserInfoFromTelegramUser(ctx, g.Update.Message.User)
 	if err != nil {
 		return fmt.Errorf("error getting userInfo: %w", err)
 	}
@@ -33,7 +33,7 @@ func (g *Game) Respond(ctx context.Context) error {
 	userInfo.AddNewWord(newWord)
 	userInfo.LastRequestTime = time.Now()
 
-	err = g.DB.UpdateUserInfo(ctx, userInfo)
+	err = g.DB.SaveUserInfo(ctx, userInfo)
 	if err != nil {
 		return fmt.Errorf("error updating userInfo: %w", err)
 	}
