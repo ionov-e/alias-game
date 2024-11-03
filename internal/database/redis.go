@@ -7,9 +7,12 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go_telegram_start/internal/database/types"
 	"go_telegram_start/pkg/telegram"
+	"log"
 	"strconv"
 	"time"
 )
+
+const lastUpdateIDKey = "lastUpdateID"
 
 type Redis struct {
 	rc *redis.Client
@@ -24,6 +27,29 @@ func NewLocalRedis() *Redis {
 	return &Redis{
 		rc: redis.NewClient(options),
 	}
+}
+
+func (r *Redis) GetLastUpdateID(ctx context.Context) (uint64, error) {
+	lastUpdateID, err := r.rc.Get(ctx, lastUpdateIDKey).Uint64()
+
+	if errors.Is(err, redis.Nil) {
+		log.Println("No lastUpdateID in redis")
+		return uint64(0), nil
+	}
+
+	if err != nil {
+		return uint64(0), fmt.Errorf("getting lastUpdateID from redis failed: %w", err)
+	}
+
+	return lastUpdateID, nil
+}
+
+func (r *Redis) SetLastUpdateID(ctx context.Context, lastUpdateID uint64) error {
+	if err := r.rc.Set(ctx, lastUpdateIDKey, lastUpdateID, 0).Err(); err != nil {
+		return fmt.Errorf("setting lastUpdateID failed: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Redis) GetOrCreateUserInfoFromTelegramUser(ctx context.Context, user telegram.User) (types.UserInfo, error) {
