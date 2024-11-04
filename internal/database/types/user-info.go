@@ -59,7 +59,7 @@ func (u *UserInfo) LastWord() WordAndState {
 	return u.RoundWords[len(u.RoundWords)-1]
 }
 
-func (u *UserInfo) MarshalBinary() ([]byte, error) {
+func (u UserInfo) MarshalBinary() ([]byte, error) {
 	data, err := json.Marshal(u)
 	if err != nil {
 		return nil, fmt.Errorf("marshal UserInfo failed: %w", err)

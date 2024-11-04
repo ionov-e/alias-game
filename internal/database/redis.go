@@ -79,12 +79,7 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegram.User
 func (r *Redis) SaveUserInfo(ctx context.Context, userInfo types.UserInfo) error {
 	key := strconv.FormatInt(userInfo.TelegramID, 10)
 
-	data, err := userInfo.MarshalBinary()
-	if err != nil {
-		return fmt.Errorf("marshal UserInfo failed: %w", err)
-	}
-
-	err = r.rc.Set(ctx, key, data, 0).Err()
+	err := r.rc.Set(ctx, key, userInfo, 0).Err()
 	if err != nil {
 		return fmt.Errorf("setting key %s in redis for updating userInfo failed: %w", key, err)
 	}

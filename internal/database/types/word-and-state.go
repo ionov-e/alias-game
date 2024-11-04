@@ -17,7 +17,7 @@ const (
 	Skipped
 )
 
-func (w *WordAndState) MarshalBinary() ([]byte, error) {
+func (w WordAndState) MarshalBinary() ([]byte, error) {
 	data, err := json.Marshal(w)
 	if err != nil {
 		return nil, fmt.Errorf("marshal WordAndState failed: %w", err)
