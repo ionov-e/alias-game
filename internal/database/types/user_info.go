@@ -18,12 +18,12 @@ type UserInfo struct {
 	// In seconds
 	PreferenceRoundTime uint16 `json:"prt"`
 	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32        `json:"ppc"`
-	PreferenceWordDifficulty uint8          `json:"pwd"`
-	PreferenceWordTopics     []uint16       `json:"pwt"`
-	RoundStartTime           time.Time      `json:"rst"`
-	RoundEndTime             time.Time      `json:"ret"`
-	RoundWords               []WordAndState `json:"rw,omitempty"`
+	PreferencePenaltyCost    float32       `json:"ppc"`
+	PreferenceWordDifficulty uint8         `json:"pwd"`
+	PreferenceWordTopics     []uint16      `json:"pwt"`
+	RoundStartTime           time.Time     `json:"rst"`
+	RoundEndTime             time.Time     `json:"ret"`
+	RoundWords               []WordToGuess `json:"rw,omitempty"`
 }
 
 func (u *UserInfo) ResultStringForTelegram() string {
@@ -33,29 +33,29 @@ func (u *UserInfo) ResultStringForTelegram() string {
 
 	msg := "Round results:\n"
 	// return every word in roundWords with its state
-	for _, wordAndState := range u.RoundWords {
-		switch wordAndState.State {
+	for _, wordToGuess := range u.RoundWords {
+		switch wordToGuess.State {
 		case Correct:
-			msg += wordAndState.Word + " ✅\n"
+			msg += wordToGuess.Word + " ✅\n"
 		case Incorrect:
-			msg += wordAndState.Word + " ❌\n"
+			msg += wordToGuess.Word + " ❌\n"
 		case Skipped:
-			msg += wordAndState.Word + " ❓\n"
+			msg += wordToGuess.Word + " ❓\n"
 		case NotAnswered:
-			msg += wordAndState.Word + " ❔\n"
+			msg += wordToGuess.Word + " ❔\n"
 		}
 	}
 	return msg
 }
 
 func (u *UserInfo) AddNewWord(word string) {
-	u.RoundWords = append(u.RoundWords, WordAndState{
+	u.RoundWords = append(u.RoundWords, WordToGuess{
 		Word:  word,
 		State: NotAnswered,
 	})
 }
 
-func (u *UserInfo) LastWord() WordAndState {
+func (u *UserInfo) LastWord() WordToGuess {
 	return u.RoundWords[len(u.RoundWords)-1]
 }
 
@@ -73,7 +73,7 @@ func (u *UserInfo) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal UserInfo failed: %w", err)
 	}
 	if u.RoundWords == nil {
-		u.RoundWords = []WordAndState{}
+		u.RoundWords = []WordToGuess{}
 	}
 	return nil
 }
