@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const lastUpdateIDKey = "lastUpdateID"
+const lastUpdateIDKey = "last-update-id"
 
 type Redis struct {
 	rc *redis.Client
@@ -88,5 +88,5 @@ func (r *Redis) SaveUserInfo(ctx context.Context, userInfo types.UserInfo) error
 }
 
 func (r *Redis) keyForUserInfo(userID int64) string {
-	return "u" + strconv.FormatInt(userID, 10)
+	return "user:" + strconv.FormatInt(userID, 10)
 }
