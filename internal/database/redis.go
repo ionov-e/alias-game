@@ -54,7 +54,7 @@ func (r *Redis) SaveLastUpdateID(ctx context.Context, lastUpdateID uint64) error
 
 func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegram.User) (types.UserInfo, error) {
 	var userInfo types.UserInfo
-	key := strconv.FormatInt(user.ID, 10)
+	key := r.keyForUserInfo(user.ID)
 	err := r.rc.Get(ctx, key).Scan(&userInfo)
 
 	if !errors.Is(err, redis.Nil) {
@@ -70,14 +70,14 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegram.User
 	err = r.rc.Set(ctx, key, newUserInfo, 0).Err()
 
 	if err != nil {
-		return newUserInfo, fmt.Errorf("setting key %s in redis for updating userInfo failed: %w", key, err)
+		return newUserInfo, fmt.Errorf("setting key %s in redis for creating userInfo failed: %w", key, err)
 	}
 
 	return newUserInfo, nil
 }
 
 func (r *Redis) SaveUserInfo(ctx context.Context, userInfo types.UserInfo) error {
-	key := strconv.FormatInt(userInfo.TelegramID, 10)
+	key := r.keyForUserInfo(userInfo.TelegramID)
 
 	err := r.rc.Set(ctx, key, userInfo, 0).Err()
 	if err != nil {
@@ -85,4 +85,8 @@ func (r *Redis) SaveUserInfo(ctx context.Context, userInfo types.UserInfo) error
 	}
 
 	return nil
+}
+
+func (r *Redis) keyForUserInfo(userID int64) string {
+	return "u" + strconv.FormatInt(userID, 10)
 }
