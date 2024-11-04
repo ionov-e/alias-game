@@ -1,12 +1,12 @@
 package app
 
 import (
+	"alias-game/internal/database"
+	"alias-game/internal/service/alias"
+	"alias-game/pkg/telegram"
+	"alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"go_telegram_start/internal/database"
-	"go_telegram_start/internal/service/alias"
-	"go_telegram_start/pkg/telegram"
-	"go_telegram_start/pkg/telegram/types"
 	"log"
 	"sync"
 	"time"

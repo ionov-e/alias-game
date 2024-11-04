@@ -1,12 +1,12 @@
 package telegram
 
 import (
+	"alias-game/pkg/telegram/types"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go_telegram_start/pkg/telegram/types"
 	"io"
 	"log"
 	"net/http"

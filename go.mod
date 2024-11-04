@@ -1,4 +1,4 @@
-module go_telegram_start
+module alias-game
 
 go 1.23rc2
 

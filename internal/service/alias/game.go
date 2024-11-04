@@ -1,11 +1,11 @@
 package alias
 
 import (
+	"alias-game/internal/database"
+	"alias-game/pkg/telegram"
+	"alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"go_telegram_start/internal/database"
-	"go_telegram_start/pkg/telegram"
-	"go_telegram_start/pkg/telegram/types"
 	"time"
 )
 

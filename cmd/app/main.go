@@ -1,8 +1,8 @@
 package main
 
 import (
-	"go_telegram_start/internal/app"
-	"go_telegram_start/internal/setup"
+	"alias-game/internal/app"
+	"alias-game/internal/setup"
 	"log"
 )
 

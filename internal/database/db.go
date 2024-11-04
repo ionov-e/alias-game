@@ -1,9 +1,9 @@
 package database
 
 import (
+	dbTypes "alias-game/internal/database/types"
+	telegramTypes "alias-game/pkg/telegram/types"
 	"context"
-	dbTypes "go_telegram_start/internal/database/types"
-	telegramTypes "go_telegram_start/pkg/telegram/types"
 )
 
 type DB interface {
