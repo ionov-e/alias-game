@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"go_telegram_start/internal/database/types"
-	types2 "go_telegram_start/pkg/telegram/types"
+	dbTypes "go_telegram_start/internal/database/types"
+	telegramTypes "go_telegram_start/pkg/telegram/types"
 	"log"
 	"strconv"
 	"time"
@@ -52,8 +52,8 @@ func (r *Redis) SaveLastUpdateID(ctx context.Context, lastUpdateID uint64) error
 	return nil
 }
 
-func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user types2.User) (types.UserInfo, error) {
-	var userInfo types.UserInfo
+func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegramTypes.User) (dbTypes.UserInfo, error) {
+	var userInfo dbTypes.UserInfo
 	key := r.keyForUserInfo(user.ID)
 	err := r.rc.Get(ctx, key).Scan(&userInfo)
 
@@ -61,7 +61,7 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user types2.User) 
 		return userInfo, nil
 	}
 
-	newUserInfo := types.UserInfo{
+	newUserInfo := dbTypes.UserInfo{
 		TelegramID:         user.ID,
 		Name:               user.FirstName,
 		LastRequestTime:    time.Now(),
@@ -76,7 +76,7 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user types2.User) 
 	return newUserInfo, nil
 }
 
-func (r *Redis) SaveUserInfo(ctx context.Context, userInfo types.UserInfo) error {
+func (r *Redis) SaveUserInfo(ctx context.Context, userInfo dbTypes.UserInfo) error {
 	key := r.keyForUserInfo(userInfo.TelegramID)
 
 	err := r.rc.Set(ctx, key, userInfo, 0).Err()
