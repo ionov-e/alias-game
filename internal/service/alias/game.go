@@ -6,7 +6,6 @@ import (
 	"alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"time"
 )
 
 type Game struct {
@@ -24,19 +23,15 @@ func New(update types.Update, client telegram.Client, db database.DB) Game {
 }
 
 func (g *Game) Respond(ctx context.Context) error {
-	userInfo, err := g.DB.UserInfoFromTelegramUser(ctx, g.Update.Message.User)
+	user, err := NewFromDB(ctx, g.DB, g.Update.Message.User)
 	if err != nil {
-		return fmt.Errorf("error getting userInfo: %w", err)
+		return fmt.Errorf("error getting user: %w", err)
 	}
 
 	newWord := "Muhaha1"
 
-	userInfo.AddNewWord(newWord)
-	userInfo.LastRequestTime = time.Now()
-
-	err = g.DB.SaveUserInfo(ctx, userInfo)
-	if err != nil {
-		return fmt.Errorf("error updating userInfo: %w", err)
+	if err = user.AddNewWord(ctx, newWord); err != nil {
+		return fmt.Errorf("error adding new word into user: %w", err)
 	}
 
 	_, err = g.Client.SendMessage(ctx, g.Update.Message.Chat.ID, newWord)
