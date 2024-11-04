@@ -6,6 +6,7 @@ import (
 	"go_telegram_start/internal/database"
 	"go_telegram_start/internal/service/alias"
 	"go_telegram_start/pkg/telegram"
+	"go_telegram_start/pkg/telegram/types"
 	"log"
 	"sync"
 	"time"
@@ -36,7 +37,7 @@ func Run(botToken string) error {
 		var wg sync.WaitGroup
 		for _, update := range updates {
 			wg.Add(1)
-			go func(update telegram.Update) {
+			go func(update types.Update) {
 				defer wg.Done()
 
 				game := alias.New(update, telegramClient, storage)

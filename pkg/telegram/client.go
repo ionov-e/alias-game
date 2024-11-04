@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go_telegram_start/pkg/telegram/types"
 	"io"
 	"log"
 	"net/http"
@@ -25,8 +26,8 @@ func New(token string) Client {
 	}
 }
 
-func (c *Client) SendMessage(ctx context.Context, chatID int64, text string) (MessageResponse, error) {
-	var responseObject MessageResponse
+func (c *Client) SendMessage(ctx context.Context, chatID int64, text string) (types.MessageResponse, error) {
+	var responseObject types.MessageResponse
 	data, err := json.Marshal(map[string]string{
 		"chat_id": strconv.FormatInt(chatID, 10),
 		"text":    text,
@@ -54,8 +55,8 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string) (Me
 }
 
 // GetUpdates https://core.telegram.org/bots/api#getupdates
-func (c *Client) GetUpdates(ctx context.Context, offset uint64, limit int, timeout int) ([]Update, error) {
-	var responseObject UpdateResponse
+func (c *Client) GetUpdates(ctx context.Context, offset uint64, limit int, timeout int) ([]types.Update, error) {
+	var responseObject types.UpdateResponse
 	data, err := json.Marshal(map[string]string{
 		"offset":  strconv.FormatUint(offset, 10),
 		"limit":   strconv.Itoa(limit),

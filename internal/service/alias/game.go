@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"go_telegram_start/internal/database"
 	"go_telegram_start/pkg/telegram"
+	"go_telegram_start/pkg/telegram/types"
 	"time"
 )
 
 type Game struct {
-	telegram.Update
+	types.Update
 	telegram.Client
 	database.DB
 }
 
-func New(update telegram.Update, client telegram.Client, db database.DB) Game {
+func New(update types.Update, client telegram.Client, db database.DB) Game {
 	return Game{
 		Update: update,
 		Client: client,

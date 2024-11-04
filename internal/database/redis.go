@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"go_telegram_start/internal/database/types"
-	"go_telegram_start/pkg/telegram"
+	types2 "go_telegram_start/pkg/telegram/types"
 	"log"
 	"strconv"
 	"time"
@@ -52,7 +52,7 @@ func (r *Redis) SaveLastUpdateID(ctx context.Context, lastUpdateID uint64) error
 	return nil
 }
 
-func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegram.User) (types.UserInfo, error) {
+func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user types2.User) (types.UserInfo, error) {
 	var userInfo types.UserInfo
 	key := r.keyForUserInfo(user.ID)
 	err := r.rc.Get(ctx, key).Scan(&userInfo)
