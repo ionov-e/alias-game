@@ -14,7 +14,7 @@ type User struct {
 	db       database.DB
 }
 
-func NewFromDB(ctx context.Context, db database.DB, tgUser telegramTypes.User) (User, error) {
+func UserFromTelegramUser(ctx context.Context, db database.DB, tgUser telegramTypes.User) (User, error) {
 	userInfo, err := db.UserInfoFromTelegramUser(ctx, tgUser)
 	if err != nil {
 		return User{}, fmt.Errorf("error getting userInfo: %w", err)

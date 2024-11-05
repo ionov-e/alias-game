@@ -23,7 +23,7 @@ func New(update types.Update, client telegram.Client, db database.DB) Game {
 }
 
 func (g *Game) Respond(ctx context.Context) error {
-	user, err := NewFromDB(ctx, g.DB, g.Update.Message.User)
+	user, err := UserFromTelegramUser(ctx, g.DB, g.Update.Message.User)
 	if err != nil {
 		return fmt.Errorf("error getting user: %w", err)
 	}
