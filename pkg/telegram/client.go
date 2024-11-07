@@ -26,32 +26,38 @@ func New(token string) Client {
 	}
 }
 
-func (c *Client) SendMessage(ctx context.Context, chatID int64, text string) (types.MessageResponse, error) {
-	var responseObject types.MessageResponse
-	data, err := json.Marshal(map[string]string{
-		"chat_id": strconv.FormatInt(chatID, 10),
-		"text":    text,
-	})
+func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (types.MessageResponse, error) {
+	var messageResponse types.MessageResponse
+
+	if message.ChatID == 0 {
+		return messageResponse, errors.New("chat id is required")
+	}
+
+	if message.Text == "" {
+		return messageResponse, errors.New("text is required")
+	}
+
+	data, err := message.ToJSON()
 	if err != nil {
-		return responseObject, fmt.Errorf("marshal SendMessage data failed: %w", err)
+		return messageResponse, fmt.Errorf("SendMessage ToJSON failed: %w", err)
 	}
 
 	responseBytes, err := c.sendRequest(ctx, "sendMessage", data)
 	if err != nil {
-		return responseObject, fmt.Errorf("send message failed: %w", err)
+		return messageResponse, fmt.Errorf("send message failed: %w", err)
 	}
 
-	err = json.Unmarshal(responseBytes, &responseObject)
+	err = json.Unmarshal(responseBytes, &messageResponse)
 	if err != nil {
 		log.Printf("Failed to unmarshal response: %s", string(responseBytes))
-		return responseObject, fmt.Errorf("failed to parse response: %w", err)
+		return messageResponse, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	if !responseObject.IsOk() {
-		return responseObject, errors.New("telegram error sending message: " + responseObject.Description)
+	if !messageResponse.IsOk() {
+		return messageResponse, errors.New("telegram error sending message: " + messageResponse.DescriptionText())
 	}
 
-	return responseObject, nil
+	return messageResponse, nil
 }
 
 // GetUpdates https://core.telegram.org/bots/api#getupdates
