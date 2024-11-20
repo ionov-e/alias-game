@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendAudio represents a request to send an audio message.
@@ -25,10 +26,10 @@ type SendAudio struct {
 	ReplyMarkup          interface{}      `json:"reply_markup,omitempty"`           // Optional: InlineKeyboardMarkup, etc.
 }
 
-func (s *SendAudio) ToJSON() (string, error) {
+func (s SendAudio) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendAudio: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

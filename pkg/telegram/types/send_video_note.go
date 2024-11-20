@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendVideoNote represents a request to send a video note.
@@ -22,10 +23,10 @@ type SendVideoNote struct {
 
 }
 
-func (s *SendVideoNote) ToJSON() (string, error) {
+func (s SendVideoNote) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendVideoNote: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

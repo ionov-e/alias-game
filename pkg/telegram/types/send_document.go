@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendDocument represents data needed to send a document.
@@ -23,10 +24,10 @@ type SendDocument struct {
 	ReplyMarkup                 interface{}      `json:"reply_markup,omitempty"`                   // Optional: InlineKeyboardMarkup, etc.
 }
 
-func (s *SendDocument) ToJSON() (string, error) {
+func (s SendDocument) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendDocument: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendPhoto represents a request to send a photo message.
@@ -23,10 +24,10 @@ type SendPhoto struct {
 	ReplyMarkup           interface{}      `json:"reply_markup,omitempty"`             // Optional: InlineKeyboardMarkup, ReplyKeyboardMarkup, etc.
 }
 
-func (s *SendPhoto) ToJSON() (string, error) {
+func (s SendPhoto) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendPhoto: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

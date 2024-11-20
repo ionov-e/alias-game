@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendMediaGroup represents a request to send a group of media items (photos, videos, documents, audios) as an album.
@@ -18,11 +19,10 @@ type SendMediaGroup struct {
 	ReplyMarkup          interface{}      `json:"reply_markup,omitempty"`           // Optional: InlineKeyboardMarkup, etc.
 }
 
-// ToJSON converts the SendMediaGroup struct to a JSON string.
-func (s *SendMediaGroup) ToJSON() (string, error) {
+func (s SendMediaGroup) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendMediaGroup: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

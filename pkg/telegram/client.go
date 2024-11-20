@@ -37,9 +37,9 @@ func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (ty
 		return messageResponse, errors.New("text is required")
 	}
 
-	data, err := message.ToJSON()
+	data, err := message.Bytes()
 	if err != nil {
-		return messageResponse, fmt.Errorf("SendMessage ToJSON failed: %w", err)
+		return messageResponse, fmt.Errorf("SendMessage Bytes failed: %w", err)
 	}
 
 	responseBytes, err := c.sendRequest(ctx, "sendMessage", data)

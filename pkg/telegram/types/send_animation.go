@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendAnimation represents a request to send an animation file (GIF or H.264/MPEG-4 AVC video).
@@ -27,10 +28,10 @@ type SendAnimation struct {
 	ReplyMarkup           interface{}      `json:"reply_markup,omitempty"`             // Optional: InlineKeyboardMarkup, etc.
 }
 
-func (s *SendAnimation) ToJSON() (string, error) {
+func (s SendAnimation) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendAnimation: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

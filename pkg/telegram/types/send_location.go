@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendLocation represents a request to send a point on the map.
@@ -23,11 +24,10 @@ type SendLocation struct {
 	ReplyMarkup          interface{}      `json:"reply_markup,omitempty"`           // Optional: InlineKeyboardMarkup, etc.
 }
 
-// ToJSON converts the SendLocation struct to a JSON string.
-func (s *SendLocation) ToJSON() (string, error) {
+func (s SendLocation) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendLocation: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

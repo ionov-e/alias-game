@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendVoice represents a request to send a voice message.
@@ -22,10 +23,10 @@ type SendVoice struct {
 	ReplyMarkup          interface{}      `json:"reply_markup,omitempty"`           // Optional: InlineKeyboardMarkup, etc.
 }
 
-func (s *SendVoice) ToJSON() (string, error) {
+func (s SendVoice) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendVoice: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }

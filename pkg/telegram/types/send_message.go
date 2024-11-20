@@ -1,6 +1,9 @@
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // SendMessage
 // Use this method to send text messages. On success, the sent Message is returned.
@@ -33,6 +36,10 @@ type SendMessage struct {
 	ReplyMarkup interface{} `json:"reply_markup,omitempty"` // Can be InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply
 }
 
-func (s SendMessage) ToJSON() ([]byte, error) {
-	return json.Marshal(s)
+func (s SendMessage) Bytes() ([]byte, error) {
+	jsonBytes, err := json.Marshal(s)
+	if err != nil {
+		return jsonBytes, fmt.Errorf("error marshalling SendMessage: %w", err)
+	}
+	return jsonBytes, nil
 }

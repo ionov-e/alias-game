@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SendVideo represents a request to send a video file.
@@ -28,10 +29,10 @@ type SendVideo struct {
 	ReplyMarkup           interface{}      `json:"reply_markup,omitempty"`             // Optional: InlineKeyboardMarkup, etc.
 }
 
-func (s *SendVideo) ToJSON() (string, error) {
+func (s SendVideo) Bytes() ([]byte, error) {
 	jsonBytes, err := json.Marshal(s)
 	if err != nil {
-		return "", err
+		return jsonBytes, fmt.Errorf("error marshalling SendVideo: %w", err)
 	}
-	return string(jsonBytes), nil
+	return jsonBytes, nil
 }
