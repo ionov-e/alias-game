@@ -2,18 +2,8 @@ package types
 
 // MessageResponse https://core.telegram.org/bots/api#sendmessage
 type MessageResponse struct {
-	Ok          bool    `json:"ok"`
-	Description *string `json:"description"` // Exists only if Ok is false
+	Ok bool `json:"ok"`
+	// Exists only if Ok is false
+	Description string  `json:"description,omitempty"`
 	Result      Message `json:"result"`
-}
-
-func (m *MessageResponse) IsOk() bool {
-	return m.Ok
-}
-
-func (m *MessageResponse) DescriptionText() string {
-	if m.Description != nil {
-		return *m.Description
-	}
-	return "For some reason it is empty"
 }

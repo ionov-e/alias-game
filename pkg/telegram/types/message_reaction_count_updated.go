@@ -1,8 +1,12 @@
 package types
 
 type MessageReactionCountUpdated struct {
-	Chat      Chat            `json:"chat"`       // The chat containing the message
-	MessageID int             `json:"message_id"` // Unique message identifier inside the chat
-	Date      int             `json:"date"`       // Date of the change in Unix time
-	Reactions []ReactionCount `json:"reactions"`  // List of reactions that are present on the message
+	// The chat containing the message
+	Chat Chat `json:"chat"`
+	// Unique message identifier inside the chat
+	MessageID int `json:"message_id"`
+	// Date of the change in Unix time
+	Date int `json:"date"`
+	// List of reactions that are present on the message
+	Reactions []ReactionCount `json:"reactions"`
 }

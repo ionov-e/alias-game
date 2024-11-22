@@ -12,9 +12,9 @@ type BackgroundTypePattern struct {
 	// Intensity of the pattern when it is shown above the filled background; 0-100
 	Intensity int `json:"intensity"`
 	// Optional. IsInverted True, if the background fill must be applied only to the pattern itself. All other pixels are black in this case. For dark themes only
-	IsInverted *bool `json:"is_inverted"`
+	IsInverted bool `json:"is_inverted"`
 	// Optional. IsMoving True, if the background moves slightly when the device is tilted
-	IsMoving *bool `json:"is_moving"`
+	IsMoving bool `json:"is_moving"`
 }
 
 // BackgroundType returns the type of the background, always "pattern"

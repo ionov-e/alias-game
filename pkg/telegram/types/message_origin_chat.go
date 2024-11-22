@@ -1,10 +1,14 @@
 package types
 
 type MessageOriginChat struct {
-	Type            string  `json:"type"`                       // Type of the message origin, always "chat"
-	Date            int     `json:"date"`                       // Date the message was originally sent (Unix time)
-	SenderChat      Chat    `json:"sender_chat"`                // Chat that sent the message originally
-	AuthorSignature *string `json:"author_signature,omitempty"` // Optional: Original message author signature if anonymous
+	// Type of the message origin, always "chat"
+	Type string `json:"type"`
+	// Date the message was originally sent (Unix time)
+	Date int `json:"date"`
+	// Chat that sent the message originally
+	SenderChat Chat `json:"sender_chat"`
+	// Optional: Original message author signature if anonymous
+	AuthorSignature string `json:"author_signature,omitempty"`
 }
 
 func (m MessageOriginChat) MessageOriginType() string { return m.Type }

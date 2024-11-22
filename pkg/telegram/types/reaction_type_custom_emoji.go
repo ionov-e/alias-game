@@ -1,8 +1,10 @@
 package types
 
 type ReactionTypeCustomEmoji struct {
-	Type          string `json:"type"`            // Always “custom_emoji”
-	CustomEmojiID string `json:"custom_emoji_id"` // Custom emoji identifier
+	// Always “custom_emoji”
+	Type string `json:"type"`
+	// Custom emoji identifier
+	CustomEmojiID string `json:"custom_emoji_id"`
 }
 
 func (r ReactionTypeCustomEmoji) ReactionType() string { return r.Type }

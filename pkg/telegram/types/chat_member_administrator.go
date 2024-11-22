@@ -16,10 +16,10 @@ type ChatMemberAdministrator struct {
 	CanPostStories      bool   `json:"can_post_stories"`            // True if the admin can post stories.
 	CanEditStories      bool   `json:"can_edit_stories"`            // True if the admin can edit stories.
 	CanDeleteStories    bool   `json:"can_delete_stories"`          // True if the admin can delete stories.
-	CanPostMessages     *bool  `json:"can_post_messages,omitempty"` // Optional. True if the admin can post messages in the channel.
-	CanEditMessages     *bool  `json:"can_edit_messages,omitempty"` // Optional. True if the admin can edit messages.
-	CanPinMessages      *bool  `json:"can_pin_messages,omitempty"`  // Optional. True if the admin can pin messages.
-	CanManageTopics     *bool  `json:"can_manage_topics,omitempty"` // Optional. True if the admin can manage forum topics.
+	CanPostMessages     bool   `json:"can_post_messages,omitempty"` // Optional. True if the admin can post messages in the channel.
+	CanEditMessages     bool   `json:"can_edit_messages,omitempty"` // Optional. True if the admin can edit messages.
+	CanPinMessages      bool   `json:"can_pin_messages,omitempty"`  // Optional. True if the admin can pin messages.
+	CanManageTopics     bool   `json:"can_manage_topics,omitempty"` // Optional. True if the admin can manage forum topics.
 	CustomTitle         string `json:"custom_title,omitempty"`      // Optional. Custom title for this user.
 }
 

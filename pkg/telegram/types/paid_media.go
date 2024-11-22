@@ -16,9 +16,9 @@ func PaidMediaFactory(mediaType string, data map[string]interface{}) (PaidMedia,
 	case "preview":
 		return PaidMediaPreview{
 			Type:     "preview",
-			Width:    intPtr(data["width"].(int)),
-			Height:   intPtr(data["height"].(int)),
-			Duration: intPtr(data["duration"].(int)),
+			Width:    data["width"].(int),
+			Height:   data["height"].(int),
+			Duration: data["duration"].(int),
 		}, nil
 	case "photo":
 		return PaidMediaPhoto{
@@ -33,8 +33,4 @@ func PaidMediaFactory(mediaType string, data map[string]interface{}) (PaidMedia,
 	default:
 		return nil, fmt.Errorf("unknown PaidMedia type: %s", mediaType)
 	}
-}
-
-func intPtr(i int) *int {
-	return &i
 }

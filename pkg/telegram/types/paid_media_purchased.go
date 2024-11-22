@@ -1,6 +1,8 @@
 package types
 
 type PaidMediaPurchased struct {
-	From             User   `json:"from"`               // User who purchased the media
-	PaidMediaPayload string `json:"paid_media_payload"` // Bot-specified paid media payload
+	// User who purchased the media
+	From User `json:"from"`
+	// Bot-specified paid media payload
+	PaidMediaPayload string `json:"paid_media_payload"`
 }

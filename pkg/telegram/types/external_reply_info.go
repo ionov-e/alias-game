@@ -4,7 +4,7 @@ package types
 type ExternalReplyInfo struct {
 	MessageOrigin      MessageOrigin       `json:"origin"`                         // Origin of the message being replied to
 	Chat               *Chat               `json:"chat,omitempty"`                 // Optional: Chat of the original message (if supergroup or channel)
-	MessageID          *int                `json:"message_id,omitempty"`           // Optional: Message ID in the original chat
+	MessageID          int                 `json:"message_id,omitempty"`           // Optional: Message ID in the original chat
 	LinkPreviewOptions *LinkPreviewOptions `json:"link_preview_options,omitempty"` // Optional: Options for link preview
 	Animation          *Animation          `json:"animation,omitempty"`            // Optional: Animation info, if message is an animation
 	Audio              *Audio              `json:"audio,omitempty"`                // Optional: Audio file info, if message is audio

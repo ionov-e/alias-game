@@ -53,8 +53,11 @@ func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (ty
 		return messageResponse, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	if !messageResponse.IsOk() {
-		return messageResponse, errors.New("telegram error sending message: " + messageResponse.DescriptionText())
+	if !messageResponse.Ok {
+		if messageResponse.Description != "" {
+			return messageResponse, errors.New("telegram error sending message: " + messageResponse.Description)
+		}
+		return messageResponse, errors.New("telegram error sending message: No Description present in response")
 	}
 
 	return messageResponse, nil

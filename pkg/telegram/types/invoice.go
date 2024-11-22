@@ -2,9 +2,14 @@ package types
 
 // Invoice https://core.telegram.org/bots/api#invoice
 type Invoice struct {
-	Title          string `json:"title"`           // Product name.
-	Description    string `json:"description"`     // Product description.
-	StartParameter string `json:"start_parameter"` // Unique bot deep-linking parameter to generate this invoice.
-	Currency       string `json:"currency"`        // Three-letter ISO 4217 currency code, or "XTR" for Telegram Stars.
-	TotalAmount    int    `json:"total_amount"`    // Total price in smallest units of the currency (e.g., 145 for US$1.45).
+	// Product name.
+	Title string `json:"title"`
+	// Product description.
+	Description string `json:"description"`
+	// Unique bot deep-linking parameter to generate this invoice.
+	StartParameter string `json:"start_parameter"`
+	// Three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
+	Currency string `json:"currency"`
+	// Total price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+	TotalAmount int `json:"total_amount"`
 }

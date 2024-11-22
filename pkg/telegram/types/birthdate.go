@@ -8,5 +8,5 @@ type Birthdate struct {
 	// Month of the user's birth; 1-12
 	Month int `json:"month"`
 	// Optional. Year of the user's birth
-	Year *int `json:"year,omitempty"`
+	Year int `json:"year,omitempty"`
 }

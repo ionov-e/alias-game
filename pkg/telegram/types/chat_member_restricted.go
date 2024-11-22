@@ -19,7 +19,7 @@ type ChatMemberRestricted struct {
 	CanInviteUsers        bool   `json:"can_invite_users"`          // True if the user can invite new users.
 	CanPinMessages        bool   `json:"can_pin_messages"`          // True if the user can pin messages.
 	CanManageTopics       bool   `json:"can_manage_topics"`         // True if the user can manage forum topics.
-	UntilDate             int64  `json:"until_date"`                // Date when restrictions will be lifted, Unix time.
+	UntilDate             int64  `json:"until_date"`                // Date when restrictions will be lifted for this user; Unix time. If 0, then the user is restricted forever
 }
 
 // GetStatus returns the member's status.

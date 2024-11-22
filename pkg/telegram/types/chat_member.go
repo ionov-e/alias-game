@@ -33,17 +33,17 @@ func ChatMemberFactory(status string, data map[string]interface{}) (ChatMember, 
 			CanPostStories:      data["can_post_stories"].(bool),
 			CanEditStories:      data["can_edit_stories"].(bool),
 			CanDeleteStories:    data["can_delete_stories"].(bool),
-			CanPostMessages:     boolPtr(data["can_post_messages"].(bool)),
-			CanEditMessages:     boolPtr(data["can_edit_messages"].(bool)),
-			CanPinMessages:      boolPtr(data["can_pin_messages"].(bool)),
-			CanManageTopics:     boolPtr(data["can_manage_topics"].(bool)),
+			CanPostMessages:     data["can_post_messages"].(bool),
+			CanEditMessages:     data["can_edit_messages"].(bool),
+			CanPinMessages:      data["can_pin_messages"].(bool),
+			CanManageTopics:     data["can_manage_topics"].(bool),
 			CustomTitle:         data["custom_title"].(string),
 		}, nil
 	case "member":
 		return ChatMemberMember{
 			Status:    "member",
 			User:      data["user"].(User),
-			UntilDate: int64Ptr(int64(data["until_date"].(float64))),
+			UntilDate: int64(data["until_date"].(float64)),
 		}, nil
 	case "restricted":
 		return ChatMemberRestricted{
@@ -64,7 +64,7 @@ func ChatMemberFactory(status string, data map[string]interface{}) (ChatMember, 
 			CanInviteUsers:        data["can_invite_users"].(bool),
 			CanPinMessages:        data["can_pin_messages"].(bool),
 			CanManageTopics:       data["can_manage_topics"].(bool),
-			UntilDate:             int64(data["until_date"].(float64)),
+			UntilDate:             data["until_date"].(int64),
 		}, nil
 	case "left":
 		return ChatMemberLeft{
@@ -75,17 +75,9 @@ func ChatMemberFactory(status string, data map[string]interface{}) (ChatMember, 
 		return ChatMemberBanned{
 			Status:    "kicked",
 			User:      data["user"].(User),
-			UntilDate: int64(data["until_date"].(float64)),
+			UntilDate: data["until_date"].(int64),
 		}, nil
 	default:
 		return nil, fmt.Errorf("unknown ChatMember status: %s", status)
 	}
-}
-
-func int64Ptr(i int64) *int64 {
-	return &i
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

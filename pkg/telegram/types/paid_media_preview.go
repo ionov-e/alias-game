@@ -6,11 +6,11 @@ type PaidMediaPreview struct {
 	// Type of the paid media, always “preview”
 	Type string `json:"type"`
 	// Optional. Media width as defined by the sender
-	Width *int `json:"width,omitempty"`
+	Width int `json:"width,omitempty"`
 	// Optional. Media height as defined by the sender
-	Height *int `json:"height,omitempty"`
+	Height int `json:"height,omitempty"`
 	// Optional. Duration of the media in seconds as defined by the sender
-	Duration *int `json:"duration,omitempty"`
+	Duration int `json:"duration,omitempty"`
 }
 
 // PaidMediaType implements the PaidMedia interface

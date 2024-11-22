@@ -1,8 +1,12 @@
 package types
 
 type ShippingQuery struct {
-	ID              string          `json:"id"`               // Unique query identifier
-	From            User            `json:"from"`             // User who sent the query
-	InvoicePayload  string          `json:"invoice_payload"`  // Bot-specified invoice payload
-	ShippingAddress ShippingAddress `json:"shipping_address"` // User-specified shipping address
+	// Unique query identifier
+	ID string `json:"id"`
+	// User who sent the query
+	From User `json:"from"`
+	// Bot-specified invoice payload
+	InvoicePayload string `json:"invoice_payload"`
+	// User-specified shipping address
+	ShippingAddress ShippingAddress `json:"shipping_address"`
 }

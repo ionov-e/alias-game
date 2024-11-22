@@ -4,7 +4,7 @@ package types
 type InaccessibleMessage struct {
 	Chat      Chat  `json:"chat"`       // Chat the message belonged to
 	MessageID int64 `json:"message_id"` // Unique message identifier inside the chat
-	Date      int64 `json:"date"`       // Always 0 to differentiate it from accessible messages
+	Date      int64 `json:"date"`       // Always 0. The field can be used to differentiate regular and inaccessible messages.
 }
 
 // MessageMessageID returns the message ID.

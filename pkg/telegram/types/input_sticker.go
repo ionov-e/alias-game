@@ -1,9 +1,14 @@
 package types
 
 type InputSticker struct {
-	Sticker      interface{}   `json:"sticker"`                 // InputFile or String: The sticker file to add
-	Format       string        `json:"format"`                  // Format of the sticker, must be "static", "animated", or "video"
-	EmojiList    []string      `json:"emoji_list"`              // List of 1-20 emojis associated with the sticker
-	MaskPosition *MaskPosition `json:"mask_position,omitempty"` // Optional: Position for mask stickers
-	Keywords     *[]string     `json:"keywords,omitempty"`      // Optional: List of up to 20 keywords for search
+	// The added sticker. Pass a file_id as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, upload a new one using multipart/form-data, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. Animated and video stickers can't be uploaded via HTTP URL.
+	Sticker InputFileOrString `json:"sticker"`
+	// Format of the added sticker, must be one of “static” for a .WEBP or .PNG image, “animated” for a .TGS animation, “video” for a WEBM video
+	Format string `json:"format"`
+	// List of 1-20 emojis associated with the sticker
+	EmojiList []string `json:"emoji_list"`
+	// Optional. Position where the mask should be placed on faces. For “mask” stickers only.
+	MaskPosition *MaskPosition `json:"mask_position,omitempty"`
+	// Optional. List of 0-20 search keywords for the sticker with total length of up to 64 characters. For “regular” and “custom_emoji” stickers only.
+	Keywords []string `json:"keywords,omitempty"`
 }

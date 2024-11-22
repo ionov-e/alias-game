@@ -35,7 +35,7 @@ func MessageOriginFactory(typeValue string, data map[string]interface{}) (Messag
 			Type:            "chat",
 			Date:            data["date"].(int),
 			SenderChat:      data["sender_chat"].(Chat),
-			AuthorSignature: &authorSignature,
+			AuthorSignature: authorSignature,
 		}, nil
 	case "channel":
 		authorSignature, ok := data["author_signature"].(string)
@@ -52,7 +52,7 @@ func MessageOriginFactory(typeValue string, data map[string]interface{}) (Messag
 			Date:            data["date"].(int),
 			Chat:            data["chat"].(Chat),
 			MessageID:       data["message_id"].(int),
-			AuthorSignature: &authorSignature,
+			AuthorSignature: authorSignature,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unknown MessageOrigin type: %s", typeValue)

@@ -10,11 +10,11 @@ type SuccessfulPayment struct {
 	// Bot-specified invoice payload
 	InvoicePayload string `json:"invoice_payload"`
 	// Optional. Identifier of the shipping option chosen by the user
-	ShippingOptionID *string `json:"shipping_option_id,omitempty"`
+	ShippingOptionID string `json:"shipping_option_id,omitempty"`
 	// Optional. Order information provided by the user
 	OrderInfo *OrderInfo `json:"order_info,omitempty"`
 	// Telegram payment identifier
 	TelegramPaymentChargeID string `json:"telegram_payment_charge_id"`
 	// Provider payment identifier
-	ProviderPaymentChargeID *string `json:"provider_payment_charge_id,omitempty"`
+	ProviderPaymentChargeID string `json:"provider_payment_charge_id,omitempty"`
 }

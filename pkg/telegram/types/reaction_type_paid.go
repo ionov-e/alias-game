@@ -1,7 +1,8 @@
 package types
 
 type ReactionTypePaid struct {
-	Type string `json:"type"` // Always “paid”
+	// Always “paid”
+	Type string `json:"type"`
 }
 
 func (r ReactionTypePaid) ReactionType() string { return r.Type }
