@@ -40,9 +40,9 @@ func Run(botToken string) error {
 			go func(update types.Update) {
 				defer wg.Done()
 
-				game := alias.New(update, telegramClient, storage)
+				updateProcessor := alias.NewUpdateProcessor(update, telegramClient, storage)
 
-				if err := game.Respond(ctx); err != nil {
+				if err := updateProcessor.Respond(ctx); err != nil {
 					log.Printf("Failed at responding to update: %+v, error: %v", update, err)
 				}
 			}(update)
