@@ -101,20 +101,20 @@ func (c *Client) sendRequest(ctx context.Context, method string, data []byte) (r
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create sendRequest: %w", err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 	response, err := c.client.Do(request)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, fmt.Errorf("failed to send sendRequest: %w", err)
 	}
 
 	responseBytes, err = io.ReadAll(response.Body)
 	defer func() { _ = response.Body.Close() }()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
+		return nil, fmt.Errorf("failed to read sendRequest response: %w", err)
 	}
 
 	return responseBytes, nil
