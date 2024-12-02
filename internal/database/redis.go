@@ -1,15 +1,16 @@
 package database
 
 import (
+	dbConstants "alias-game/internal/database/constants"
 	dbTypes "alias-game/internal/database/types"
 	telegramTypes "alias-game/pkg/telegram/types"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
 	"log"
 	"strconv"
-	"time"
+	"time" //nolint:goimports
 )
 
 const lastUpdateIDKey = "last-update-id"
@@ -18,7 +19,9 @@ type Redis struct {
 	rc *redis.Client
 }
 
-func NewLocalRedis() *Redis {
+const ttlForDictionary = 365 * 24 * time.Hour
+
+func NewLocalRedis() DB {
 	options := &redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -64,6 +67,7 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegramTypes
 	newUserInfo := dbTypes.UserInfo{
 		TelegramID:         user.ID,
 		Name:               user.FirstName,
+		CurrentMenu:        dbConstants.MenuStart0Key.String(),
 		LastRequestTime:    time.Now(),
 		PreferenceLanguage: user.LanguageWithDefault(),
 	}
@@ -76,7 +80,7 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegramTypes
 	return newUserInfo, nil
 }
 
-func (r *Redis) SaveUserInfo(ctx context.Context, userInfo dbTypes.UserInfo) error {
+func (r *Redis) SaveUserInfo(ctx context.Context, userInfo *dbTypes.UserInfo) error {
 	key := r.keyForUserInfo(userInfo.TelegramID)
 
 	err := r.rc.Set(ctx, key, userInfo, 0).Err()
@@ -89,4 +93,59 @@ func (r *Redis) SaveUserInfo(ctx context.Context, userInfo dbTypes.UserInfo) err
 
 func (r *Redis) keyForUserInfo(userID int64) string {
 	return "user:" + strconv.FormatInt(userID, 10)
+}
+
+func (r *Redis) DictionaryCreate(ctx context.Context, key dbConstants.DictionaryKeyAndTry, words []string) error {
+	for _, word := range words {
+		if err := r.rc.RPush(ctx, key.String(), word).Err(); err != nil {
+			return fmt.Errorf("adding word %q to key %s in redis failed: %w", word, key, err)
+		}
+	}
+	if err := r.rc.Expire(ctx, key.String(), ttlForDictionary).Err(); err != nil {
+		return fmt.Errorf("setting expiration for key %s in redis failed: %w", key, err)
+	}
+	return nil
+}
+
+func (r *Redis) DictionaryExists(ctx context.Context, key dbConstants.DictionaryKeyAndTry) (bool, error) {
+	exists, err := r.rc.Exists(ctx, key.String()).Result()
+	if err != nil {
+		return false, fmt.Errorf("checking if key %s exists in redis failed: %w", key, err)
+	}
+	return exists == 1, nil
+}
+
+func (r *Redis) DictionaryWordList(ctx context.Context, key dbConstants.DictionaryKeyAndTry) ([]string, error) {
+	exists, err := r.rc.Exists(ctx, key.String()).Result()
+	if err != nil {
+		return nil, fmt.Errorf("error checking existence of key %s: %w", key, err)
+	}
+	if exists == 0 {
+		return nil, fmt.Errorf("no dictionary for key %s in redis", key)
+	}
+
+	words, err := r.rc.LRange(ctx, key.String(), 0, -1).Result()
+	if err != nil {
+		return nil, fmt.Errorf("getting dictionary with key %s failed: %w", key, err)
+	}
+	return words, nil
+}
+
+func (r *Redis) DictionaryWord(ctx context.Context, key dbConstants.DictionaryKeyAndTry, index uint16) (string, error) {
+	exists, err := r.rc.Exists(ctx, key.String()).Result()
+	if err != nil {
+		return "", fmt.Errorf("error checking existence of key %s: %w", key, err)
+	}
+	if exists == 0 {
+		return "", fmt.Errorf("no dictionary for key %s in redis", key)
+	}
+
+	word, err := r.rc.LIndex(ctx, key.String(), int64(index)).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", fmt.Errorf("no word at index %d for key %s in redis", index, key)
+	}
+	if err != nil {
+		return "", fmt.Errorf("retrieving word at index %d for key %s failed: %w", index, key, err)
+	}
+	return word, nil
 }

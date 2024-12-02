@@ -51,4 +51,6 @@ func Run(botToken string) error {
 
 		time.Sleep(time.Second * 5)
 	}
+
+	//TODO Queue for end_round messages (results)
 }

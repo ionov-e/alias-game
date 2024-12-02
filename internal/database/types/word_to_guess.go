@@ -1,21 +1,15 @@
 package types
 
 import (
+	dbConstants "alias-game/internal/database/constants"
 	"encoding/json"
 	"fmt"
 )
 
 type WordToGuess struct {
-	Word  string `json:"w"`
-	State uint8  `json:"v"`
+	NumberInDictionary uint16                 `json:"n"` //nolint:tagliatelle
+	Result             dbConstants.WordResult `json:"s"` //nolint:tagliatelle
 }
-
-const (
-	NotAnswered = iota
-	Correct
-	Incorrect
-	Skipped
-)
 
 func (w WordToGuess) MarshalBinary() ([]byte, error) {
 	data, err := json.Marshal(w)
