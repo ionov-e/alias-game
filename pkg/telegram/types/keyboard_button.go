@@ -17,3 +17,11 @@ type KeyboardButton struct {
 	// Optional. If specified, the described Web App will be launched when the button is pressed.
 	WebApp *WebAppInfo `json:"web_app,omitempty"`
 }
+
+func KeyboardButtonsFromStrings(buttons []string) [][]KeyboardButton {
+	keyboard := make([][]KeyboardButton, len(buttons))
+	for i, button := range buttons {
+		keyboard[i] = []KeyboardButton{{Text: button}}
+	}
+	return keyboard
+}

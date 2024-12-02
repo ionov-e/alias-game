@@ -26,6 +26,21 @@ func New(token string) Client {
 	}
 }
 
+func (c *Client) SendOneTimeReplyMarkup(ctx context.Context, chatID int64, text string, keyboardButtons [][]types.KeyboardButton) error {
+	_, err := c.SendMessage(ctx, types.SendMessage{
+		ChatID: chatID,
+		Text:   text,
+		ReplyMarkup: types.ReplyKeyboardMarkup{
+			OneTimeKeyboard: true,
+			Keyboard:        keyboardButtons,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send reply markup: chatID=%d, text=%s, keyboardButtons=%+v, error=%w", chatID, text, keyboardButtons, err)
+	}
+	return nil
+}
+
 func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (types.MessageResponse, error) {
 	var messageResponse types.MessageResponse
 
