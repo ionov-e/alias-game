@@ -28,14 +28,14 @@ func ChooseNewStart0(ctx context.Context, client *telegram.Client, user *aliasUs
 		return fmt.Errorf("failed in ChooseNewStart0 changing current menu: %w", err)
 	}
 
-	err = thisMenu.Message(ctx)
+	err = thisMenu.DefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in ChooseNewStart0: %w", err)
 	}
 	return nil
 }
 
-func (m Start0) Message(ctx context.Context) error {
+func (m Start0) DefaultMessage(ctx context.Context) error {
 	err := m.client.SendOneTimeReplyMarkup(
 		ctx,
 		m.user.TelegramID(),
@@ -67,7 +67,7 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 		}
 		return nil
 	default:
-		err := m.Message(ctx)
+		err := m.DefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
 		}

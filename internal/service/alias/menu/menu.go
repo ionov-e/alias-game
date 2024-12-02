@@ -15,7 +15,7 @@ type Menu interface {
 	RedisKey() dbConstants.MenuKeyStored
 	Options() []string
 	Respond(ctx context.Context, message string) error
-	Message(ctx context.Context) error
+	DefaultMessage(ctx context.Context) error
 }
 
 func FactoryMethod(

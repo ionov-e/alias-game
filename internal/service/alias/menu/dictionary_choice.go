@@ -30,7 +30,7 @@ func ChooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user 
 	if err != nil {
 		return fmt.Errorf("failed in ChooseDictionaryChoice0 changing current menu: %w", err)
 	}
-	err = thisMenu.Message(ctx)
+	err = thisMenu.DefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in ChooseNewStart0 in ChooseDictionaryChoice0: %w", err)
 	}
@@ -38,7 +38,7 @@ func ChooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user 
 	return nil
 }
 
-func (m DictionaryChoice0) Message(ctx context.Context) error {
+func (m DictionaryChoice0) DefaultMessage(ctx context.Context) error {
 	err := m.client.SendOneTimeReplyMarkup(
 		ctx,
 		m.user.TelegramID(),
@@ -82,7 +82,7 @@ func (m DictionaryChoice0) Respond(ctx context.Context, message string) error {
 		}
 		return nil
 	default:
-		err := m.Message(ctx)
+		err := m.DefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("не ожиданный ответ '%s', провалились отправить сообщение: %w", message, err)
 		}

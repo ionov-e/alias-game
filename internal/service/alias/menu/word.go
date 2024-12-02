@@ -34,14 +34,14 @@ func ChooseWord(ctx context.Context, wordNumber uint16, client *telegram.Client,
 	if err != nil {
 		return fmt.Errorf("failed in ChooseWord changing current thisMenu: %w", err)
 	}
-	err = thisMenu.Message(ctx)
+	err = thisMenu.DefaultMessage(ctx)
 	if err != nil {
-		return fmt.Errorf("failed Message in ChooseWord): %w", err)
+		return fmt.Errorf("failed DefaultMessage in ChooseWord): %w", err)
 	}
 	return nil
 }
 
-func (w Word) Message(ctx context.Context) error {
+func (w Word) DefaultMessage(ctx context.Context) error {
 	word, err := w.user.Word(ctx, w.number)
 	if err != nil {
 		return fmt.Errorf("failed getting Word (#%d - %d): %w", w.number, dbConstants.Correct, err)
@@ -103,7 +103,7 @@ func (w Word) Respond(ctx context.Context, message string) error {
 		}
 		return nil
 	default:
-		err := w.Message(ctx)
+		err := w.DefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message in Word: %w", message, err)
 		}
