@@ -21,10 +21,6 @@ func NewWordMenuKey(number uint16) MenuKeyStored {
 	return MenuKeyStored(fmt.Sprintf("%s%d", wordPrefix, number))
 }
 
-func (mk MenuKeyStored) String() string {
-	return string(mk)
-}
-
 // IsWord checks if the MenuKeyStored has the wordPrefix.
 func (mk MenuKeyStored) IsWord() bool {
 	return strings.HasPrefix(string(mk), wordPrefix)

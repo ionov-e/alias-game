@@ -67,7 +67,7 @@ func (r *Redis) UserInfoFromTelegramUser(ctx context.Context, user telegramTypes
 	newUserInfo := dbTypes.UserInfo{
 		TelegramID:         user.ID,
 		Name:               user.FirstName,
-		CurrentMenu:        dbConstants.MenuStart0Key.String(),
+		CurrentMenu:        string(dbConstants.MenuStart0Key),
 		LastRequestTime:    time.Now(),
 		PreferenceLanguage: user.LanguageWithDefault(),
 	}

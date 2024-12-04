@@ -32,7 +32,7 @@ func (u *User) CurrentMenuKey() string {
 }
 
 func (u *User) ChangeCurrentMenu(ctx context.Context, menuKey dbConstants.MenuKeyStored) error {
-	newMenuKey := menuKey.String()
+	newMenuKey := string(menuKey)
 	u.userInfo.CurrentMenu = newMenuKey
 	err := u.db.SaveUserInfo(ctx, &u.userInfo)
 	if err != nil {
