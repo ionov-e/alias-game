@@ -5,18 +5,18 @@ import (
 	"alias-game/internal/service/alias/menu"
 	aliasUser "alias-game/internal/service/alias/user"
 	"alias-game/pkg/telegram"
-	"alias-game/pkg/telegram/types"
+	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
 )
 
 type UpdateProcessor struct {
-	Update types.Update
+	Update tgTypes.Update
 	Client telegram.Client
 	DB     database.DB
 }
 
-func NewUpdateProcessor(update types.Update, client telegram.Client, db database.DB) UpdateProcessor {
+func NewUpdateProcessor(update tgTypes.Update, client telegram.Client, db database.DB) UpdateProcessor {
 	return UpdateProcessor{
 		Update: update,
 		Client: client,
@@ -35,52 +35,49 @@ func (up *UpdateProcessor) Respond(ctx context.Context) error {
 	}
 }
 
-func (up *UpdateProcessor) respondToMessage(ctx context.Context, message types.Message) error {
+func (up *UpdateProcessor) respondToMessage(ctx context.Context, message tgTypes.Message) error {
 	if message.From == nil {
-		return fmt.Errorf("no valid sender in message: %+v", message)
+		return fmt.Errorf("no user in Message.From: %+v", message)
+	}
+	err := up.respondToText(ctx, message.From, message.Text)
+	if err != nil {
+		return fmt.Errorf("failed responding to Message: %+v, error: %w", message, err)
 	}
 
-	user, err := aliasUser.UserFromTelegramUser(ctx, up.DB, message.From)
-	if err != nil {
-		return fmt.Errorf("error getting user from Update.Message: %w", err)
-	}
-
-	ch, err := menu.FactoryMethod(user.CurrentMenuKey(), &up.Client, &user)
-	if err != nil {
-		return fmt.Errorf("error getting choice from Update.Message.Text: %w", err)
-	}
-
-	err = ch.Respond(ctx, message.Text)
-	if err != nil {
-		return fmt.Errorf("failed responding to Update.Message: %+v, error: %w", message, err)
-	}
 	return nil
 }
 
-func (up *UpdateProcessor) respondToCallbackQuery(ctx context.Context, callbackQuery types.CallbackQuery) error {
-	user, err := aliasUser.UserFromTelegramUser(ctx, up.DB, &callbackQuery.From)
-	if err != nil {
-		return fmt.Errorf("error getting user from Update.CallbackQuery: %w", err)
-	}
-
-	ch, err := menu.FactoryMethod(user.CurrentMenuKey(), &up.Client, &user)
-	if err != nil {
-		return fmt.Errorf("error getting choice from CallbackQuery.Message.Text: %w", err)
-	}
-
-	switch m := callbackQuery.Message.(type) {
-	case types.Message:
-		if m.Text == "" {
+func (up *UpdateProcessor) respondToCallbackQuery(ctx context.Context, callbackQuery tgTypes.CallbackQuery) error {
+	switch message := callbackQuery.Message.(type) {
+	case tgTypes.Message:
+		if message.Text == "" {
 			return fmt.Errorf("failed getting CallbackQuery.Message.Text: %+v", callbackQuery)
 		}
-		err = ch.Respond(ctx, m.Text)
+		if &callbackQuery.From == nil {
+			return fmt.Errorf("no user (impossible by contract) in CallbackQuery.From: %+v", callbackQuery)
+		}
+		err := up.respondToText(ctx, &callbackQuery.From, message.Text)
 		if err != nil {
 			return fmt.Errorf("failed responding to CallbackQuery: %+v, error: %w", callbackQuery, err)
 		}
 		return nil
-	case types.InaccessibleMessage:
+	case tgTypes.InaccessibleMessage:
 		return fmt.Errorf("InaccessibleMessage in callbackQuery: %+v", callbackQuery)
 	default:
 		return fmt.Errorf("somehow no valid message in callbackQuery: %+v", callbackQuery)
 	}
+}
+
+func (up *UpdateProcessor) respondToText(ctx context.Context, userFromTelegram *tgTypes.User, text string) error {
+	user, err := aliasUser.UserFromTelegramUser(ctx, up.DB, userFromTelegram)
+	if err != nil {
+		return fmt.Errorf("error getting user from Update.CallbackQuery: %w", err)
+	}
+
+	currentMenu, err := menu.FactoryMethod(user.CurrentMenuKey(), &up.Client, &user)
+	if err != nil {
+		return fmt.Errorf("error getting choice from CallbackQuery.Message.Text: %w", err)
+	}
+
+	return currentMenu.Respond(ctx, text) //nolint:wrapcheck
 }
