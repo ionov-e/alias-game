@@ -7,6 +7,8 @@ import (
 	"context"
 )
 
+//TODO seperate. Think about how to implement in doc both or three
+
 type DB interface {
 	LastUpdateID(ctx context.Context) (uint64, error)
 	SaveLastUpdateID(ctx context.Context, lastUpdateID uint64) error
@@ -16,4 +18,5 @@ type DB interface {
 	DictionaryExists(ctx context.Context, key dbConstants.DictionaryKeyAndTry) (bool, error)
 	DictionaryWordList(ctx context.Context, key dbConstants.DictionaryKeyAndTry) ([]string, error)
 	DictionaryWord(ctx context.Context, key dbConstants.DictionaryKeyAndTry, index uint16) (string, error)
+	Close() error
 }

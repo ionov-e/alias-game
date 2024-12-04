@@ -149,3 +149,11 @@ func (r *Redis) DictionaryWord(ctx context.Context, key dbConstants.DictionaryKe
 	}
 	return word, nil
 }
+
+func (r *Redis) Close() error {
+	err := r.rc.Close()
+	if err != nil {
+		return fmt.Errorf("stopping Redis connection failed: %w", err)
+	}
+	return nil
+}
