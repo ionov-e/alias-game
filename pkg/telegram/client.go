@@ -41,6 +41,17 @@ func (c *Client) SendOneTimeReplyMarkup(ctx context.Context, chatID int64, text 
 	return nil
 }
 
+func (c *Client) SendTextMessage(ctx context.Context, chatID int64, text string) error {
+	_, err := c.SendMessage(ctx, types.SendMessage{
+		ChatID: chatID,
+		Text:   text,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send text message: chatID=%d, text=%s, error=%w", chatID, text, err)
+	}
+	return nil
+}
+
 func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (types.MessageResponse, error) {
 	var messageResponse types.MessageResponse
 

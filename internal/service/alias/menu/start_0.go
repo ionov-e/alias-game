@@ -7,6 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
+	"log"
 )
 
 type Start0 struct {
@@ -67,10 +68,16 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 		}
 		return nil
 	default:
-		err := m.DefaultMessage(ctx)
+		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
+		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
+		err := m.client.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		if err != nil {
+			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+		}
+		err = m.DefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in ChooseNewStart0", message)
+		return fmt.Errorf("unexpected answer '%s' in Start0", message)
 	}
 }

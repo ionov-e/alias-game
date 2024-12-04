@@ -7,6 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
+	"log"
 )
 
 type Word struct {
@@ -85,7 +86,13 @@ func (w Word) Respond(ctx context.Context, message string) error {
 		}
 		return nil
 	default:
-		err := w.DefaultMessage(ctx)
+		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
+		log.Printf("%s for user: %d in Start0", errMessage, w.user.TelegramID())
+		err := w.client.SendTextMessage(ctx, w.user.TelegramID(), errMessage)
+		if err != nil {
+			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+		}
+		err = w.DefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message in Word: %w", message, err)
 		}

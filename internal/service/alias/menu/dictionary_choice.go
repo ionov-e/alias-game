@@ -7,6 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
+	"log"
 )
 
 type DictionaryChoice0 struct {
@@ -82,10 +83,16 @@ func (m DictionaryChoice0) Respond(ctx context.Context, message string) error {
 		}
 		return nil
 	default:
-		err := m.DefaultMessage(ctx)
+		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
+		log.Printf("%s for user: %d in DictionaryChoice0", errMessage, m.user.TelegramID())
+		err := m.client.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("не ожиданный ответ '%s', провалились отправить сообщение: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in DictionaryChoice0: %w", message, err)
 		}
-		return fmt.Errorf("неожиданный ответ '%s' из меню выбора словаря DictionaryChoice0", message)
+		err = m.DefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("unexpected message '%s', failed to send menu message in DictionaryChoice0: %w", message, err)
+		}
+		return fmt.Errorf("unexpected message '%s' in DictionaryChoice0", message)
 	}
 }
