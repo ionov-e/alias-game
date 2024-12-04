@@ -75,27 +75,9 @@ func (w Word) Options() []string {
 func (w Word) Respond(ctx context.Context, message string) error {
 	switch message {
 	case RightMessage:
-		err := w.user.UpdateWordResult(ctx, w.number, dbConstants.Correct)
-		if err != nil {
-			return fmt.Errorf("failed updating WordResult (#%d - %d): %w", w.number, dbConstants.Correct, err)
-		}
-
-		err = ChooseWord(ctx, w.number+1, w.client, w.user)
-		if err != nil {
-			return fmt.Errorf("failed ChooseWord for user: %d): %w", w.user.TelegramID(), err)
-		}
-		return nil
+		return w.saveWordResultAndGoToNextWord(ctx, dbConstants.Correct)
 	case NextMessage:
-		err := w.user.UpdateWordResult(ctx, w.number, dbConstants.Skipped)
-		if err != nil {
-			return fmt.Errorf("failed updating WordResult (#%d - %d): %w", w.number, dbConstants.Skipped, err)
-		}
-
-		err = ChooseWord(ctx, w.number+1, w.client, w.user)
-		if err != nil {
-			return fmt.Errorf("failed ChooseWord for user: %d): %w", w.user.TelegramID(), err)
-		}
-		return nil
+		return w.saveWordResultAndGoToNextWord(ctx, dbConstants.Skipped)
 	case EndRoundMessage:
 		err := ChooseNewStart0(ctx, w.client, w.user)
 		if err != nil {
@@ -109,4 +91,17 @@ func (w Word) Respond(ctx context.Context, message string) error {
 		}
 		return fmt.Errorf("unexpected answer '%s' in Word", message)
 	}
+}
+
+func (w Word) saveWordResultAndGoToNextWord(ctx context.Context, result dbConstants.WordResult) error {
+	err := w.user.UpdateWordResult(ctx, w.number, result)
+	if err != nil {
+		return fmt.Errorf("failed updating WordResult (#%d - %d): %w", w.number, result, err)
+	}
+
+	err = ChooseWord(ctx, w.number+1, w.client, w.user)
+	if err != nil {
+		return fmt.Errorf("failed ChooseWord for user: %d): %w", w.user.TelegramID(), err)
+	}
+	return nil
 }
