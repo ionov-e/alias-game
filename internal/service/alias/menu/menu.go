@@ -12,7 +12,6 @@ const BackString = "Назад"
 
 // Menu defines where user is currently at. In bot menu/settings, or maybe currently answering a question
 type Menu interface {
-	RedisKey() dbConstants.MenuKeyStored
 	Options() []string
 	Respond(ctx context.Context, message string) error
 	DefaultMessage(ctx context.Context) error

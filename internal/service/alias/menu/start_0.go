@@ -23,12 +23,11 @@ func NewStart0(client *telegram.Client, user *aliasUser.User) Menu {
 }
 
 func ChooseNewStart0(ctx context.Context, client *telegram.Client, user *aliasUser.User) error {
-	thisMenu := NewStart0(client, user)
-	err := user.ChangeCurrentMenu(ctx, thisMenu.RedisKey())
+	err := user.ChangeCurrentMenu(ctx, dbConstants.MenuStart0Key)
 	if err != nil {
 		return fmt.Errorf("failed in ChooseNewStart0 changing current menu: %w", err)
 	}
-
+	thisMenu := NewStart0(client, user)
 	err = thisMenu.DefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in ChooseNewStart0: %w", err)
@@ -47,10 +46,6 @@ func (m Start0) DefaultMessage(ctx context.Context) error {
 		return fmt.Errorf("failed sending message: %w", err)
 	}
 	return nil
-}
-
-func (m Start0) RedisKey() dbConstants.MenuKeyStored {
-	return dbConstants.MenuStart0Key
 }
 
 func (m Start0) Options() []string {

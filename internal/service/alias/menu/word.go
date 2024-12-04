@@ -30,11 +30,11 @@ func NewWord(wordNumber uint16, client *telegram.Client, user *aliasUser.User) M
 }
 
 func ChooseWord(ctx context.Context, wordNumber uint16, client *telegram.Client, user *aliasUser.User) error {
-	thisMenu := NewWord(wordNumber, client, user)
-	err := user.ChangeCurrentMenu(ctx, thisMenu.RedisKey())
+	err := user.ChangeCurrentMenu(ctx, dbConstants.NewWordMenuKey(wordNumber))
 	if err != nil {
 		return fmt.Errorf("failed in ChooseWord changing current thisMenu: %w", err)
 	}
+	thisMenu := NewWord(wordNumber, client, user)
 	err = thisMenu.DefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed DefaultMessage in ChooseWord): %w", err)
@@ -59,10 +59,6 @@ func (w Word) DefaultMessage(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (w Word) RedisKey() dbConstants.MenuKeyStored {
-	return dbConstants.NewWordMenuKey(w.number)
 }
 
 func (w Word) Options() []string {

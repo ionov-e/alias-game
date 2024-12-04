@@ -26,16 +26,15 @@ func NewDictionaryChoice0(client *telegram.Client, user *aliasUser.User) Menu {
 }
 
 func ChooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user *aliasUser.User) error {
-	thisMenu := NewDictionaryChoice0(client, user)
-	err := user.ChangeCurrentMenu(ctx, thisMenu.RedisKey())
+	err := user.ChangeCurrentMenu(ctx, dbConstants.MenuDictionaryChoice0Key)
 	if err != nil {
 		return fmt.Errorf("failed in ChooseDictionaryChoice0 changing current menu: %w", err)
 	}
+	thisMenu := NewDictionaryChoice0(client, user)
 	err = thisMenu.DefaultMessage(ctx)
 	if err != nil {
-		return fmt.Errorf("failed sending message in ChooseNewStart0 in ChooseDictionaryChoice0: %w", err)
+		return fmt.Errorf("failed sending message in ChooseDictionaryChoice0: %w", err)
 	}
-
 	return nil
 }
 
@@ -51,10 +50,6 @@ func (m DictionaryChoice0) DefaultMessage(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (m DictionaryChoice0) RedisKey() dbConstants.MenuKeyStored {
-	return dbConstants.MenuDictionaryChoice0Key
 }
 
 func (m DictionaryChoice0) Options() []string {
