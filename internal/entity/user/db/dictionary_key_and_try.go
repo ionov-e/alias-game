@@ -1,17 +1,20 @@
-package constants
+package db
 
-import "strconv"
+import (
+	dictionaryConstant "alias-game/internal/constant/dictionary"
+	"strconv"
+)
 
 // DictionaryKeyAndTry represents a menu key stored in Redis.
 type DictionaryKeyAndTry struct {
-	BaseKey   DictionaryKey
+	BaseKey   dictionaryConstant.Key
 	TryNumber uint16
 }
 
-func NewDictionaryKey(baseKey DictionaryKey, index uint16) DictionaryKeyAndTry {
+func NewDictionaryKeyAndTry(baseKey dictionaryConstant.Key, tryNumber uint16) DictionaryKeyAndTry {
 	return DictionaryKeyAndTry{
 		BaseKey:   baseKey,
-		TryNumber: index,
+		TryNumber: tryNumber,
 	}
 }
 

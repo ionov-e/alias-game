@@ -37,7 +37,7 @@ func (cq *CallbackQuery) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("failed to unmarshal CallbackQuery: %w", err)
 	}
 
-	// Process the "message" field specifically
+	// Run the "message" field specifically
 	if len(aux.Message) > 0 {
 		var msg Message
 		if err := json.Unmarshal(aux.Message, &msg); err == nil {

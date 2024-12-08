@@ -1,21 +1,22 @@
 package dictionary
 
 import (
-	"alias-game/internal/database"
-	dbConstants "alias-game/internal/database/constants"
+	dictionaryConstant "alias-game/internal/constant/dictionary"
+	userDB "alias-game/internal/entity/user/db"
+	"alias-game/internal/storage"
 	"context"
 	"fmt"
 	"math/rand"
 	"time"
 )
 
-type BaseRandomRedisDictionary struct {
-	key           dbConstants.DictionaryKey
+type RedisBaseRandom struct {
+	key           dictionaryConstant.Key
 	numberOfTries uint16
-	db            database.DB
+	db            storage.DictionaryDBInterface
 }
 
-func (b *BaseRandomRedisDictionary) DictionaryWord(ctx context.Context, wordNumber uint16, originalList func() []string) (string, error) {
+func (b *RedisBaseRandom) word(ctx context.Context, wordNumber uint16, originalList func() []string) (string, error) {
 	word, err := b.db.DictionaryWord(ctx, b.redisKey(), wordNumber)
 	if err != nil {
 		if wordNumber != 0 {
@@ -32,7 +33,7 @@ func (b *BaseRandomRedisDictionary) DictionaryWord(ctx context.Context, wordNumb
 }
 
 // listWordsStoreIfNeeded returns a list of words for the given key, or creates a new one if it does not exist
-func (b *BaseRandomRedisDictionary) listWordsStoreIfNeeded(ctx context.Context, originalList func() []string) ([]string, error) {
+func (b *RedisBaseRandom) listWordsStoreIfNeeded(ctx context.Context, originalList func() []string) ([]string, error) {
 	words, err := b.db.DictionaryWordList(ctx, b.redisKey())
 	if err == nil {
 		return words, nil
@@ -46,20 +47,12 @@ func (b *BaseRandomRedisDictionary) listWordsStoreIfNeeded(ctx context.Context, 
 	return newWords, nil
 }
 
-func (b *BaseRandomRedisDictionary) redisKey() dbConstants.DictionaryKeyAndTry {
-	return dbConstants.NewDictionaryKey(b.key, b.numberOfTries)
+func (b *RedisBaseRandom) redisKey() userDB.DictionaryKeyAndTry {
+	return userDB.NewDictionaryKeyAndTry(b.key, b.numberOfTries)
 }
 
-func (b *BaseRandomRedisDictionary) randomList(allWords []string) []string {
+func (b *RedisBaseRandom) randomList(allWords []string) []string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec // We shouldn't bother
 	r.Shuffle(len(allWords), func(i, j int) { allWords[i], allWords[j] = allWords[j], allWords[i] })
 	return allWords
-}
-
-func RedisDictionaryFactoryMethod(keyAndTry dbConstants.DictionaryKeyAndTry, db database.DB) (Dictionary, error) {
-	if keyAndTry.BaseKey == dbConstants.Easy1 {
-		return NewEasy1(keyAndTry.TryNumber, db), nil
-	}
-
-	return nil, fmt.Errorf("unknown dictionary key: %s", keyAndTry.BaseKey)
 }

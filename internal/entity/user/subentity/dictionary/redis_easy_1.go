@@ -1,38 +1,38 @@
 package dictionary
 
 import (
-	"alias-game/internal/database"
-	dbConstants "alias-game/internal/database/constants"
+	dictionaryConstant "alias-game/internal/constant/dictionary"
+	"alias-game/internal/storage"
 	"context"
 )
 
-type Easy1 struct {
-	base BaseRandomRedisDictionary
+type RedisEasy1 struct {
+	base RedisBaseRandom
 }
 
-func NewEasy1(numberOfTries uint16, db database.DB) Dictionary {
-	return &Easy1{
-		base: BaseRandomRedisDictionary{
-			key:           dbConstants.Easy1,
+func NewEasy1(numberOfTries uint16, db storage.DictionaryDBInterface) *RedisEasy1 {
+	return &RedisEasy1{
+		base: RedisBaseRandom{
+			key:           dictionaryConstant.Easy1,
 			numberOfTries: numberOfTries,
 			db:            db,
 		},
 	}
 }
 
-func (d *Easy1) List(ctx context.Context) ([]string, error) {
+func (d *RedisEasy1) List(ctx context.Context) ([]string, error) {
 	return d.base.listWordsStoreIfNeeded(ctx, d.originalList)
 }
 
-func (d *Easy1) Word(ctx context.Context, number uint16) (string, error) {
-	return d.base.DictionaryWord(ctx, number, d.originalList)
+func (d *RedisEasy1) Word(ctx context.Context, number uint16) (string, error) {
+	return d.base.word(ctx, number, d.originalList)
 }
 
-func (d *Easy1) originalList() []string {
+func (d *RedisEasy1) originalList() []string {
 	return append(append(d.nouns(), d.verbs()...), d.adjectives()...)
 }
 
-func (d *Easy1) nouns() []string {
+func (d *RedisEasy1) nouns() []string {
 	return []string{
 		"Автомобиль", "Акула", "Ангел", "Арбуз", "Бульдозер", "Велосипед",
 		"Верблюд", "Водопад", "Водолазка", "Галстук", "Герой", "Гитара",
@@ -54,7 +54,7 @@ func (d *Easy1) nouns() []string {
 	}
 }
 
-func (d *Easy1) verbs() []string {
+func (d *RedisEasy1) verbs() []string {
 	return []string{
 		"Плавать", "Летать", "Танцевать", "Прыгать", "Пить", "Рисовать",
 		"Читать", "Готовить", "Бегать", "Петь", "Спать", "Смеяться",
@@ -65,7 +65,7 @@ func (d *Easy1) verbs() []string {
 	}
 }
 
-func (d *Easy1) adjectives() []string {
+func (d *RedisEasy1) adjectives() []string {
 	return []string{
 		"Счастливый", "Добрый", "Быстрый", "Красивый", "Смешной", "Грустный",
 		"Яркий", "Холодный", "Горячий", "Медленный", "Сладкий", "Теплый",

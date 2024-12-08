@@ -1,14 +1,14 @@
-package types
+package db
 
 import (
-	dbConstants "alias-game/internal/database/constants"
+	userConstant "alias-game/internal/constant/user"
 	"encoding/json"
 	"fmt"
 )
 
 type WordToGuess struct {
-	NumberInDictionary uint16                 `json:"n"` //nolint:tagliatelle
-	Result             dbConstants.WordResult `json:"s"` //nolint:tagliatelle
+	NumberInDictionary uint16                  `json:"n"` //nolint:tagliatelle
+	Result             userConstant.WordResult `json:"s"` //nolint:tagliatelle
 }
 
 func (w WordToGuess) MarshalBinary() ([]byte, error) {

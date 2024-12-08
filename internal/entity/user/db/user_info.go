@@ -1,7 +1,9 @@
-package types
+package db
 
 import (
-	dbConstants "alias-game/internal/database/constants"
+	dictionaryConstant "alias-game/internal/constant/dictionary"
+	menuConstant "alias-game/internal/constant/menu"
+	userConstant "alias-game/internal/constant/user"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -20,16 +22,16 @@ type UserInfo struct {
 	// In seconds
 	PreferenceRoundTime uint16 `json:"prt"` //nolint:tagliatelle
 	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32                         `json:"ppc"`          //nolint:tagliatelle
-	PreferenceWordDifficulty uint8                           `json:"pwd"`          //nolint:tagliatelle
-	DictionaryHistory        []DictionaryCount               `json:"dc,omitempty"` //nolint:tagliatelle
-	RoundStartTime           time.Time                       `json:"rst"`          //nolint:tagliatelle
-	RoundEndTime             time.Time                       `json:"ret"`          //nolint:tagliatelle
-	RoundDictionaryKeyAndTry dbConstants.DictionaryKeyAndTry `json:"rdk"`          //nolint:tagliatelle
-	RoundWords               []WordToGuess                   `json:"rw,omitempty"` //nolint:tagliatelle
+	PreferencePenaltyCost    float32             `json:"ppc"`          //nolint:tagliatelle
+	PreferenceWordDifficulty uint8               `json:"pwd"`          //nolint:tagliatelle
+	DictionaryHistory        []DictionaryCount   `json:"dc,omitempty"` //nolint:tagliatelle
+	RoundStartTime           time.Time           `json:"rst"`          //nolint:tagliatelle
+	RoundEndTime             time.Time           `json:"ret"`          //nolint:tagliatelle
+	RoundDictionaryKeyAndTry DictionaryKeyAndTry `json:"rdk"`          //nolint:tagliatelle
+	RoundWords               []WordToGuess       `json:"rw,omitempty"` //nolint:tagliatelle
 }
 
-func (u *UserInfo) AddWordResult(wordNumber uint16, wordResult dbConstants.WordResult) { //TODO delete
+func (u *UserInfo) AddWordResult(wordNumber uint16, wordResult userConstant.WordResult) {
 	for i, word := range u.RoundWords {
 		if word.NumberInDictionary == wordNumber {
 			u.RoundWords[i].Result = wordResult
@@ -41,7 +43,7 @@ func (u *UserInfo) AddWordResult(wordNumber uint16, wordResult dbConstants.WordR
 		NumberInDictionary: wordNumber,
 		Result:             wordResult,
 	})
-	u.CurrentMenu = string(dbConstants.NewWordMenuKey(wordNumber))
+	u.CurrentMenu = string(menuConstant.NewWordKey(wordNumber))
 	u.AddLastRequest()
 }
 
@@ -49,13 +51,13 @@ func (u *UserInfo) AddLastRequest() {
 	u.LastRequestTime = time.Now()
 }
 
-func (u *UserInfo) FindDictionaryCountInHistory(dictionaryKey dbConstants.DictionaryKey) (*DictionaryCount, error) {
+func (u *UserInfo) FindDictionaryCountInHistory(dictionaryKey dictionaryConstant.Key) (*DictionaryCount, error) {
 	for _, dictionaryCount := range u.DictionaryHistory {
 		if dictionaryCount.DictionaryKey == dictionaryKey {
 			return &dictionaryCount, nil
 		}
 	}
-	return &DictionaryCount{}, fmt.Errorf("dictionaryKey key %s not found in history", dictionaryKey)
+	return &DictionaryCount{}, fmt.Errorf("dictionaryDB key %s not found in history", dictionaryKey)
 }
 
 func (u UserInfo) MarshalBinary() ([]byte, error) {

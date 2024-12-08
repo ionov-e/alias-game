@@ -1,12 +1,9 @@
 package setup
 
 import (
-	"errors"
-	"flag"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
-	"os"
+	"os" //nolint:nolintlint,goimports
 	"time"
 )
 
@@ -23,20 +20,4 @@ func Logging() error {
 	}
 	log.SetOutput(file)
 	return nil
-}
-
-func Token() (string, error) {
-	token := flag.String("token-bot-token", "", "telegram bot token")
-	flag.Parse()
-	if *token != "" {
-		return *token, nil
-	}
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
-	tokenFromEnv, ok := os.LookupEnv("TELEGRAM_BOT_TOKEN")
-	if ok {
-		return tokenFromEnv, nil
-	}
-	return "", errors.New("getting token failed")
 }
