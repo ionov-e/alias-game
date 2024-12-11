@@ -16,9 +16,8 @@ type DictionaryChoice0 struct {
 	user     *userEntity.User
 }
 
-const DictionaryChoice0Name = "Выбор слов"
-const Easy1Name = "Легкий словарь"
-const BackString = "Назад"
+const easy1DictionaryNameMessage = "Легкий словарь"
+const backMessage = "Назад"
 
 func NewDictionaryChoice0(tgClient *telegram.Client, user *userEntity.User) DictionaryChoice0 {
 	return DictionaryChoice0{
@@ -29,7 +28,7 @@ func NewDictionaryChoice0(tgClient *telegram.Client, user *userEntity.User) Dict
 
 func (m DictionaryChoice0) Respond(ctx context.Context, message string) error {
 	switch message {
-	case Easy1Name:
+	case easy1DictionaryNameMessage:
 		err := m.user.ChooseDictionary(ctx, dictionaryConstant.Easy1)
 		if err != nil {
 			return fmt.Errorf("failed ChooseDictionary in DictionaryChoice0: %w", err)
@@ -39,7 +38,7 @@ func (m DictionaryChoice0) Respond(ctx context.Context, message string) error {
 			return fmt.Errorf("failed DictionaryChoice0 respond with %s: %w", message, err)
 		}
 		return nil
-	case BackString:
+	case backMessage:
 		err := chooseNewStart0(ctx, m.tgClient, m.user)
 		if err != nil {
 			return fmt.Errorf("failed DictionaryChoice0 respond with %s: %w", message, err)
@@ -89,7 +88,7 @@ func (m DictionaryChoice0) sendDefaultMessage(ctx context.Context) error {
 
 func (m DictionaryChoice0) options() []string {
 	return []string{
-		Easy1Name,
-		BackString,
+		easy1DictionaryNameMessage,
+		backMessage,
 	}
 }

@@ -10,6 +10,8 @@ import (
 	"log"
 )
 
+const dictionaryChoice0Message = "Выбор слов"
+
 type Start0 struct {
 	tgClient *telegram.Client
 	user     *userEntity.User
@@ -24,7 +26,7 @@ func NewStart0(tgClient *telegram.Client, user *userEntity.User) Start0 {
 
 func (m Start0) Respond(ctx context.Context, message string) error {
 	switch message {
-	case DictionaryChoice0Name:
+	case dictionaryChoice0Message:
 		err := chooseDictionaryChoice0(ctx, m.tgClient, m.user)
 		if err != nil {
 			return fmt.Errorf("error chooseDictionaryChoice0: %w", err)
@@ -73,6 +75,6 @@ func (m Start0) sendDefaultMessage(ctx context.Context) error {
 
 func (m Start0) options() []string {
 	return []string{
-		DictionaryChoice0Name,
+		dictionaryChoice0Message,
 	}
 }

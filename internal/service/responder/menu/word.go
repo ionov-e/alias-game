@@ -18,9 +18,9 @@ type WordGuess struct {
 	user     *userEntity.User
 }
 
-const RightMessage = "Верно"
-const NextMessage = "Следующее"
-const EndRoundMessage = "Закончить игру"
+const rightMessage = "Верно"
+const nextMessage = "Следующее"
+const endRoundMessage = "Закончить игру"
 
 func NewWordGuess(wordNumber uint16, tgClient *telegram.Client, user *userEntity.User) WordGuess {
 	return WordGuess{
@@ -32,11 +32,11 @@ func NewWordGuess(wordNumber uint16, tgClient *telegram.Client, user *userEntity
 
 func (w WordGuess) Respond(ctx context.Context, message string) error {
 	switch message {
-	case RightMessage:
+	case rightMessage:
 		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Correct)
-	case NextMessage:
+	case nextMessage:
 		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Skipped)
-	case EndRoundMessage:
+	case endRoundMessage:
 		err := chooseNewStart0(ctx, w.tgClient, w.user)
 		if err != nil {
 			return fmt.Errorf("failed chooseNewStart0 for user: %d): %w", w.user.TelegramID(), err)
@@ -91,9 +91,9 @@ func chooseWord(ctx context.Context, wordNumber uint16, client *telegram.Client,
 
 func (w WordGuess) options() []string {
 	return []string{
-		RightMessage,
-		NextMessage,
-		EndRoundMessage,
+		rightMessage,
+		nextMessage,
+		endRoundMessage,
 	}
 }
 
