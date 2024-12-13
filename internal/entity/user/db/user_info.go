@@ -22,42 +22,62 @@ type UserInfo struct {
 	// In seconds
 	PreferenceRoundTime uint16 `json:"prt"` //nolint:tagliatelle
 	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32             `json:"ppc"`          //nolint:tagliatelle
-	PreferenceWordDifficulty uint8               `json:"pwd"`          //nolint:tagliatelle
-	DictionaryHistory        []DictionaryCount   `json:"dc,omitempty"` //nolint:tagliatelle
-	RoundStartTime           time.Time           `json:"rst"`          //nolint:tagliatelle
-	RoundEndTime             time.Time           `json:"ret"`          //nolint:tagliatelle
-	RoundDictionaryKeyAndTry DictionaryKeyAndTry `json:"rdk"`          //nolint:tagliatelle
-	RoundWords               []WordToGuess       `json:"rw,omitempty"` //nolint:tagliatelle
+	PreferencePenaltyCost    float32                   `json:"ppc"`           //nolint:tagliatelle
+	PreferenceWordDifficulty uint8                     `json:"pwd"`           //nolint:tagliatelle
+	DictionaryHistory        []DictionaryCount         `json:"dc,omitempty"`  //nolint:tagliatelle
+	RoundStartTime           time.Time                 `json:"rst"`           //nolint:tagliatelle
+	RoundEndTime             time.Time                 `json:"ret"`           //nolint:tagliatelle
+	RoundDictionaryKey       dictionaryConstant.Key    `json:"rdk"`           //nolint:tagliatelle
+	RoundWords               []string                  `json:"rw,omitempty"`  //nolint:tagliatelle
+	RoundWordResults         []userConstant.WordResult `json:"rwr,omitempty"` //nolint:tagliatelle
 }
 
 func (u *UserInfo) AddWordResult(wordNumber uint16, wordResult userConstant.WordResult) {
-	for i, word := range u.RoundWords {
-		if word.NumberInDictionary == wordNumber {
-			u.RoundWords[i].Result = wordResult
-			return
-		}
-	}
-	// If the word doesn't exist:
-	u.RoundWords = append(u.RoundWords, WordToGuess{
-		NumberInDictionary: wordNumber,
-		Result:             wordResult,
-	})
-	u.CurrentMenu = string(menuConstant.NewWordKey(wordNumber))
 	u.AddLastRequest()
+	u.CurrentMenu = string(menuConstant.NewWordKey(wordNumber))
+
+	if u.RoundWordResults == nil {
+		u.RoundWordResults = make([]userConstant.WordResult, wordNumber+1)
+	}
+
+	if int(wordNumber) >= len(u.RoundWordResults) {
+		u.RoundWordResults = append(
+			u.RoundWordResults,
+			make(
+				[]userConstant.WordResult,
+				int(wordNumber)-len(u.RoundWordResults)+1,
+			)...,
+		)
+	}
+
+	u.RoundWordResults[wordNumber] = wordResult
 }
 
 func (u *UserInfo) AddLastRequest() {
 	u.LastRequestTime = time.Now()
 }
 
-func (u *UserInfo) FindDictionaryCountInHistory(dictionaryKey dictionaryConstant.Key) (*DictionaryCount, error) {
-	for _, dictionaryCount := range u.DictionaryHistory {
-		if dictionaryCount.DictionaryKey == dictionaryKey {
-			return &dictionaryCount, nil
+func (u *UserInfo) ChooseAnotherDictionary(dictionaryKey dictionaryConstant.Key) {
+	u.RoundDictionaryKey = dictionaryKey
+
+	if u.DictionaryHistory == nil {
+		u.DictionaryHistory = []DictionaryCount{
+			{DictionaryKey: dictionaryKey, Count: 1},
+		}
+		return
+	}
+
+	for i, dictCount := range u.DictionaryHistory {
+		if dictCount.DictionaryKey == dictionaryKey {
+			u.DictionaryHistory[i].Count++
+			return
 		}
 	}
-	return &DictionaryCount{}, fmt.Errorf("dictionaryDB key %s not found in history", dictionaryKey)
+
+	u.DictionaryHistory = append(u.DictionaryHistory, DictionaryCount{
+		DictionaryKey: dictionaryKey,
+		Count:         1,
+	})
 }
 
 func (u UserInfo) MarshalBinary() ([]byte, error) {
@@ -73,8 +93,14 @@ func (u *UserInfo) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("unmarshal userInfo failed: %w", err)
 	}
+	if u.RoundWordResults == nil {
+		u.RoundWordResults = []userConstant.WordResult{}
+	}
 	if u.RoundWords == nil {
-		u.RoundWords = []WordToGuess{}
+		u.RoundWords = []string{}
+	}
+	if u.DictionaryHistory == nil {
+		u.DictionaryHistory = []DictionaryCount{}
 	}
 	return nil
 }

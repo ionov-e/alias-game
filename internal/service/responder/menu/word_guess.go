@@ -37,7 +37,17 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 	case nextMessage:
 		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Skipped)
 	case endRoundMessage:
-		err := chooseNewStart0(ctx, w.tgClient, w.user)
+		resultText, err := w.user.EndRound()
+		if err != nil {
+			return fmt.Errorf("failed EndRound for user: %d): %w", w.user.TelegramID(), err)
+		}
+
+		err = w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), resultText)
+		if err != nil {
+			return fmt.Errorf("failed to send text message for user: %d in endRoundMessage: %w", w.user.TelegramID(), err)
+		}
+
+		err = chooseNewStart0(ctx, w.tgClient, w.user)
 		if err != nil {
 			return fmt.Errorf("failed chooseNewStart0 for user: %d): %w", w.user.TelegramID(), err)
 		}
@@ -58,7 +68,7 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 }
 
 func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
-	word, err := w.user.Word(ctx, w.number)
+	word, err := w.user.Word(w.number)
 	if err != nil {
 		return fmt.Errorf("failed getting WordGuess (#%d): %w", w.number, err)
 	}

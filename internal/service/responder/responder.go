@@ -11,18 +11,16 @@ import (
 )
 
 type Responder struct {
-	tgUpdate     tgTypes.Update
-	tgClient     telegram.Client
-	userDB       storage.UserDBInterface
-	dictionaryDB storage.DictionaryDBInterface
+	tgUpdate tgTypes.Update
+	tgClient telegram.Client
+	userDB   storage.UserDBInterface
 }
 
-func New(tgUpdate tgTypes.Update, tgClient telegram.Client, userDB storage.UserDBInterface, dictionaryDB storage.DictionaryDBInterface) Responder {
+func New(tgUpdate tgTypes.Update, tgClient telegram.Client, userDB storage.UserDBInterface) Responder {
 	return Responder{
-		tgUpdate:     tgUpdate,
-		tgClient:     tgClient,
-		userDB:       userDB,
-		dictionaryDB: dictionaryDB,
+		tgUpdate: tgUpdate,
+		tgClient: tgClient,
+		userDB:   userDB,
 	}
 }
 
@@ -32,7 +30,7 @@ func (r *Responder) Run(ctx context.Context) error {
 		return fmt.Errorf("failed at extracting from tgUpdate: %+v, error: %w", r.tgUpdate, err)
 	}
 
-	user, err := userEntity.NewFromTelegramUser(ctx, r.userDB, r.dictionaryDB, &tgUser)
+	user, err := userEntity.NewFromTelegramUser(ctx, r.userDB, &tgUser)
 	if err != nil {
 		return fmt.Errorf("error getting user from Update.CallbackQuery: %w", err)
 	}

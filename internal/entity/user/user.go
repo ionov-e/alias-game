@@ -5,30 +5,29 @@ import (
 	menuConstant "alias-game/internal/constant/menu"
 	userConstant "alias-game/internal/constant/user"
 	userDB "alias-game/internal/entity/user/db"
-	dictionaryEntity "alias-game/internal/entity/user/subentity/dictionary"
+	dictionaryCollection "alias-game/internal/entity/user/dictionary"
 	"alias-game/internal/storage"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 )
 
-type dictionaryInterface interface {
-	List(ctx context.Context) ([]string, error)
-	Word(ctx context.Context, number uint16) (string, error)
-}
+const gameResultString = "Результат игры"
+const correctAnswersCountString = "Количество правильных ответов"
 
 type User struct {
-	userInfo        userDB.UserInfo
-	dbForUser       storage.UserDBInterface
-	dbForDictionary storage.DictionaryDBInterface
+	userInfo userDB.UserInfo
+	db       storage.UserDBInterface
 }
 
-func NewFromTelegramUser(ctx context.Context, dbForUser storage.UserDBInterface, dbForDictionary storage.DictionaryDBInterface, tgUser *tgTypes.User) (User, error) {
-	userInfo, err := dbForUser.UserInfoFromTelegramUser(ctx, *tgUser)
+func NewFromTelegramUser(ctx context.Context, db storage.UserDBInterface, tgUser *tgTypes.User) (User, error) {
+	userInfo, err := db.UserInfoFromTelegramUser(ctx, *tgUser)
 	if err != nil {
 		return User{}, fmt.Errorf("error getting userInfo: %w", err)
 	}
-	return User{userInfo: userInfo, dbForUser: dbForUser, dbForDictionary: dbForDictionary}, nil
+	return User{userInfo: userInfo, db: db}, nil
 }
 
 func (u *User) TelegramID() int64 {
@@ -42,70 +41,69 @@ func (u *User) CurrentMenuKey() string {
 func (u *User) ChangeCurrentMenu(ctx context.Context, menuKey menuConstant.Key) error {
 	newMenuKey := string(menuKey)
 	u.userInfo.CurrentMenu = newMenuKey
-	err := u.dbForUser.SaveUserInfo(ctx, &u.userInfo)
+	err := u.db.SaveUserInfo(ctx, &u.userInfo)
 	if err != nil {
 		return fmt.Errorf("failed ChangeCurrentMenu for user %d with menuConstant %s: %w", u.userInfo.TelegramID, newMenuKey, err)
 	}
 	return nil
 }
 
-func (u *User) Word(ctx context.Context, wordNumber uint16) (string, error) {
-	dict, err := u.dictionaryFactoryMethod(u.userInfo.RoundDictionaryKeyAndTry)
-	if err != nil {
-		return "", fmt.Errorf("RedisDictionaryFactoryMethod failed: %w", err)
+func (u *User) Word(wordNumber uint16) (string, error) {
+	if int(wordNumber) >= len(u.userInfo.RoundWords)-1 {
+		return "", fmt.Errorf("wordNumber %d is too much for RoundWords slice of %d", wordNumber, len(u.userInfo.RoundWords))
 	}
-
-	word, err := dict.Word(ctx, wordNumber)
-	if err != nil {
-		return "", fmt.Errorf("failed at getting Word: %w", err)
-	}
-
-	return word, nil
+	return u.userInfo.RoundWords[wordNumber], nil
 }
 
 func (u *User) UpdateWordResult(ctx context.Context, wordNumber uint16, wordResult userConstant.WordResult) error {
 	u.userInfo.AddWordResult(wordNumber, wordResult)
-	err := u.dbForUser.SaveUserInfo(ctx, &u.userInfo)
+	err := u.db.SaveUserInfo(ctx, &u.userInfo)
 	if err != nil {
 		return fmt.Errorf("failed to save updated user info: %w", err)
 	}
 	return nil
 }
 
-func (u *User) ResultStringForTelegram(ctx context.Context) (string, error) {
-	dictionaryWords, err := u.dbForDictionary.DictionaryWordList(ctx, u.userInfo.RoundDictionaryKeyAndTry)
+func (u *User) EndRound() (string, error) {
+	result, err := u.resultString()
 	if err != nil {
-		return "", fmt.Errorf("failed to save updated user info: %w", err)
+		return "", fmt.Errorf("in EndRound failed resultString: %w", err)
 	}
+	u.userInfo.RoundWordResults = []userConstant.WordResult{}
+	u.userInfo.RoundWords = []string{}
+	u.userInfo.AddLastRequest()
+	return result, nil
+}
 
-	msg := "Round results:\n"
-	for number, wordToGuess := range u.userInfo.RoundWords {
-		wordAsString := dictionaryWords[wordToGuess.NumberInDictionary]
-		msg += fmt.Sprintf("%d) %s %s\n", number, wordAsString, wordToGuess.Result)
+func (u *User) resultString() (string, error) {
+	correctAnswers := 0
+	roundWords := u.userInfo.RoundWords
+	msg := fmt.Sprintf("%s:\n", gameResultString)
+
+	for number, wordResult := range u.userInfo.RoundWordResults {
+		msg += fmt.Sprintf("%d) %s %s\n", number+1, roundWords[number], wordResult)
+		if wordResult == userConstant.Correct {
+			correctAnswers++
+		}
 	}
+	msg += fmt.Sprintf("%s: %d", correctAnswersCountString, correctAnswers)
 
 	return msg, nil
 }
 
 func (u *User) ChooseDictionary(ctx context.Context, keyForDictionary dictionaryConstant.Key) error {
 	u.userInfo.AddLastRequest()
+	u.userInfo.ChooseAnotherDictionary(keyForDictionary)
 
-	dictionaryCount, err := u.userInfo.FindDictionaryCountInHistory(keyForDictionary)
-
-	var newDictionaryCount uint16
-	if err == nil {
-		dictionaryCount.Count++
-		newDictionaryCount = dictionaryCount.Count
-	} else {
-		newDictionaryCount = 1
-		u.userInfo.DictionaryHistory = append(u.userInfo.DictionaryHistory, userDB.DictionaryCount{
-			DictionaryKey: keyForDictionary,
-			Count:         newDictionaryCount,
-		})
+	wordsFromDict, err := u.wordsFromDictionary()
+	if err != nil {
+		return fmt.Errorf("wordsFromDictionary failed: %w", err)
 	}
-	u.userInfo.RoundDictionaryKeyAndTry = userDB.NewDictionaryKeyAndTry(keyForDictionary, newDictionaryCount)
+	r := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec // We shouldn't bother
+	r.Shuffle(len(wordsFromDict), func(i, j int) { wordsFromDict[i], wordsFromDict[j] = wordsFromDict[j], wordsFromDict[i] })
+	u.userInfo.RoundWords = wordsFromDict
 
-	err = u.dbForUser.SaveUserInfo(ctx, &u.userInfo)
+	err = u.db.SaveUserInfo(ctx, &u.userInfo)
 	if err != nil {
 		return fmt.Errorf("in ChooseDictionary failed to save updated user info: %w", err)
 	}
@@ -113,10 +111,10 @@ func (u *User) ChooseDictionary(ctx context.Context, keyForDictionary dictionary
 	return nil
 }
 
-func (u *User) dictionaryFactoryMethod(keyAndTry userDB.DictionaryKeyAndTry) (dictionaryInterface, error) {
-	if keyAndTry.BaseKey == dictionaryConstant.Easy1 {
-		return dictionaryEntity.NewEasy1(keyAndTry.TryNumber, u.dbForDictionary), nil
+func (u *User) wordsFromDictionary() ([]string, error) {
+	if u.userInfo.RoundDictionaryKey == dictionaryConstant.Easy1 {
+		return dictionaryCollection.Ease1List(), nil
 	}
 
-	return nil, fmt.Errorf("unknown dictionary key: %s", keyAndTry.BaseKey)
+	return nil, fmt.Errorf("unknown dictionary key: %s", u.userInfo.RoundDictionaryKey)
 }

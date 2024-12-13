@@ -1,38 +1,16 @@
 package dictionary
 
-import (
-	dictionaryConstant "alias-game/internal/constant/dictionary"
-	"alias-game/internal/storage"
-	"context"
-)
-
-type RedisEasy1 struct {
-	base RedisBaseRandom
+func Ease1List() []string {
+	return append(
+		append(
+			ease1Nouns(),
+			ease1Verbs()...,
+		),
+		ease1Adjectives()...,
+	)
 }
 
-func NewEasy1(numberOfTries uint16, db storage.DictionaryDBInterface) *RedisEasy1 {
-	return &RedisEasy1{
-		base: RedisBaseRandom{
-			key:           dictionaryConstant.Easy1,
-			numberOfTries: numberOfTries,
-			db:            db,
-		},
-	}
-}
-
-func (d *RedisEasy1) List(ctx context.Context) ([]string, error) {
-	return d.base.listWordsStoreIfNeeded(ctx, d.originalList)
-}
-
-func (d *RedisEasy1) Word(ctx context.Context, number uint16) (string, error) {
-	return d.base.word(ctx, number, d.originalList)
-}
-
-func (d *RedisEasy1) originalList() []string {
-	return append(append(d.nouns(), d.verbs()...), d.adjectives()...)
-}
-
-func (d *RedisEasy1) nouns() []string {
+func ease1Nouns() []string {
 	return []string{
 		"Автомобиль", "Акула", "Ангел", "Арбуз", "Бульдозер", "Велосипед",
 		"Верблюд", "Водопад", "Водолазка", "Галстук", "Герой", "Гитара",
@@ -54,7 +32,7 @@ func (d *RedisEasy1) nouns() []string {
 	}
 }
 
-func (d *RedisEasy1) verbs() []string {
+func ease1Verbs() []string {
 	return []string{
 		"Плавать", "Летать", "Танцевать", "Прыгать", "Пить", "Рисовать",
 		"Читать", "Готовить", "Бегать", "Петь", "Спать", "Смеяться",
@@ -65,7 +43,7 @@ func (d *RedisEasy1) verbs() []string {
 	}
 }
 
-func (d *RedisEasy1) adjectives() []string {
+func ease1Adjectives() []string {
 	return []string{
 		"Счастливый", "Добрый", "Быстрый", "Красивый", "Смешной", "Грустный",
 		"Яркий", "Холодный", "Горячий", "Медленный", "Сладкий", "Теплый",

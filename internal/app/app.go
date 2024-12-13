@@ -20,20 +20,17 @@ type App struct {
 	tgClient       telegram.Client
 	lastUpdateIDDB lastUpdateIDDBInterface
 	userDB         storage.UserDBInterface
-	dictionaryDB   storage.DictionaryDBInterface
 }
 
 func New(
 	tgClient telegram.Client,
 	lastUpdateIDDB lastUpdateIDDBInterface,
 	userDB storage.UserDBInterface,
-	dictionaryDB storage.DictionaryDBInterface,
 ) App {
 	return App{
 		tgClient:       tgClient,
 		lastUpdateIDDB: lastUpdateIDDB,
 		userDB:         userDB,
-		dictionaryDB:   dictionaryDB,
 	}
 }
 
@@ -65,7 +62,7 @@ func (a *App) Run(ctx context.Context) error {
 			go func() {
 				defer wg.Done()
 
-				process := responder.New(updateResponse, a.tgClient, a.userDB, a.dictionaryDB)
+				process := responder.New(updateResponse, a.tgClient, a.userDB)
 				if err = process.Run(ctx); err != nil {
 					log.Printf("Failed at responding to update: %+v, error: %v", updateResponse, err)
 				}

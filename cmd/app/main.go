@@ -36,14 +36,13 @@ func main() {
 	}()
 	lastUpdateIDDB := localRedis.NewLastUpdateID(redisClient)
 	userDB := localRedis.NewUser(redisClient)
-	dictionaryDB := localRedis.NewDictionary(redisClient)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	log.Println("App started")
 
-	process := app.New(tgClient, &lastUpdateIDDB, userDB, dictionaryDB)
+	process := app.New(tgClient, &lastUpdateIDDB, userDB)
 	if err := process.Run(ctx); err != nil {
 		log.Panic(err)
 	}
