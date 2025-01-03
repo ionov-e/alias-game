@@ -11,7 +11,7 @@ import (
 	"log"
 )
 
-type DictionaryChoice0 struct {
+type SetDictionary0 struct {
 	tgClient *telegram.Client
 	user     *userEntity.User
 }
@@ -19,52 +19,52 @@ type DictionaryChoice0 struct {
 const easy1DictionaryNameMessage = "Легкий словарь"
 const backMessage = "Назад"
 
-func NewDictionaryChoice0(tgClient *telegram.Client, user *userEntity.User) DictionaryChoice0 {
-	return DictionaryChoice0{
+func NewSetDictionary0(tgClient *telegram.Client, user *userEntity.User) SetDictionary0 {
+	return SetDictionary0{
 		tgClient: tgClient,
 		user:     user,
 	}
 }
 
-func (m DictionaryChoice0) Respond(ctx context.Context, message string) error {
+func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 	switch message {
 	case easy1DictionaryNameMessage:
 		err := m.user.ChooseDictionary(ctx, dictionaryConstant.Easy1)
 		if err != nil {
-			return fmt.Errorf("failed ChooseDictionary in DictionaryChoice0: %w", err)
+			return fmt.Errorf("failed ChooseDictionary in SetDictionary: %w", err)
 		}
-		err = chooseWord(ctx, 0, m.tgClient, m.user)
+		err = chooseSetTeamCount(ctx, m.tgClient, m.user)
 		if err != nil {
-			return fmt.Errorf("failed DictionaryChoice0 respond with %s: %w", message, err)
+			return fmt.Errorf("failed chooseSetTeamCount respond with %s: %w", message, err)
 		}
 		return nil
 	case backMessage:
 		err := chooseNewStart0(ctx, m.tgClient, m.user)
 		if err != nil {
-			return fmt.Errorf("failed DictionaryChoice0 respond with %s: %w", message, err)
+			return fmt.Errorf("failed SetDictionary respond with %s: %w", message, err)
 		}
 		return nil
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in DictionaryChoice0", errMessage, m.user.TelegramID())
+		log.Printf("%s for user: %d in SetDictionary", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in DictionaryChoice0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in SetDictionary: %w", message, err)
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send menu message in DictionaryChoice0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send menu message in SetDictionary: %w", message, err)
 		}
-		return fmt.Errorf("unexpected message '%s' in DictionaryChoice0", message)
+		return fmt.Errorf("unexpected message '%s' in SetDictionary", message)
 	}
 }
 
 func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.DictionaryChoice0Key)
+	err := user.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
 	if err != nil {
 		return fmt.Errorf("failed in chooseDictionaryChoice0 changing current menu: %w", err)
 	}
-	thisMenu := NewDictionaryChoice0(client, user)
+	thisMenu := NewSetDictionary0(client, user)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseDictionaryChoice0: %w", err)
@@ -72,7 +72,7 @@ func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user 
 	return nil
 }
 
-func (m DictionaryChoice0) sendDefaultMessage(ctx context.Context) error {
+func (m SetDictionary0) sendDefaultMessage(ctx context.Context) error {
 	err := m.tgClient.SendOneTimeReplyMarkup(
 		ctx,
 		m.user.TelegramID(),
@@ -80,13 +80,13 @@ func (m DictionaryChoice0) sendDefaultMessage(ctx context.Context) error {
 		tgTypes.KeyboardButtonsFromStrings(m.options()),
 	)
 	if err != nil {
-		return fmt.Errorf("failed sending message in DictionaryChoice0: %w", err)
+		return fmt.Errorf("failed sending message in SetDictionary: %w", err)
 	}
 
 	return nil
 }
 
-func (m DictionaryChoice0) options() []string {
+func (m SetDictionary0) options() []string {
 	return []string{
 		easy1DictionaryNameMessage,
 		backMessage,

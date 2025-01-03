@@ -32,7 +32,7 @@ func (r *User) UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User)
 	newUserInfo := userDB.UserInfo{
 		TelegramID:         user.ID,
 		Name:               user.FirstName,
-		CurrentMenu:        string(menuConstant.Start0Key),
+		CurrentMenu:        string(menuConstant.Start0),
 		LastRequestTime:    time.Now(),
 		PreferenceLanguage: user.LanguageWithDefault(),
 	}

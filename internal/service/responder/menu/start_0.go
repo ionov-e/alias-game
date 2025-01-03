@@ -10,7 +10,7 @@ import (
 	"log"
 )
 
-const dictionaryChoice0Message = "Выбор слов"
+const startMessage = "Старт"
 
 type Start0 struct {
 	tgClient *telegram.Client
@@ -26,14 +26,14 @@ func NewStart0(tgClient *telegram.Client, user *userEntity.User) Start0 {
 
 func (m Start0) Respond(ctx context.Context, message string) error {
 	switch message {
-	case dictionaryChoice0Message:
-		err := chooseDictionaryChoice0(ctx, m.tgClient, m.user)
+	case startMessage:
+		err := chooseSetRoundTime(ctx, m.tgClient, m.user)
 		if err != nil {
 			return fmt.Errorf("error chooseDictionaryChoice0: %w", err)
 		}
 		return nil
 	default:
-		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
+		errMessage := fmt.Sprintf("Неизвестная команда: '%s'", message)
 		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
@@ -48,7 +48,7 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 }
 
 func chooseNewStart0(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.Start0Key)
+	err := user.ChangeCurrentMenu(ctx, menuConstant.Start0)
 	if err != nil {
 		return fmt.Errorf("failed in chooseNewStart0 changing current menu: %w", err)
 	}
@@ -75,6 +75,6 @@ func (m Start0) sendDefaultMessage(ctx context.Context) error {
 
 func (m Start0) options() []string {
 	return []string{
-		dictionaryChoice0Message,
+		startMessage,
 	}
 }

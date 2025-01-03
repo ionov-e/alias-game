@@ -12,19 +12,16 @@ import (
 )
 
 type WordGuess struct {
-	// Номер из словаря
-	number   uint16
 	tgClient *telegram.Client
 	user     *userEntity.User
 }
 
 const rightMessage = "Верно"
-const nextMessage = "Следующее"
-const endRoundMessage = "Закончить игру"
+const nextInWordGuessMessage = "Следующее"
+const endRoundMessage = "Закончить раунд"
 
-func NewWordGuess(wordNumber uint16, tgClient *telegram.Client, user *userEntity.User) WordGuess {
+func NewWordGuess(tgClient *telegram.Client, user *userEntity.User) WordGuess {
 	return WordGuess{
-		number:   wordNumber,
 		tgClient: tgClient,
 		user:     user,
 	}
@@ -34,22 +31,13 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 	switch message {
 	case rightMessage:
 		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Correct)
-	case nextMessage:
+	case nextInWordGuessMessage:
 		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Skipped)
 	case endRoundMessage:
-		resultText, err := w.user.EndRound()
+		// TODO stop timer
+		err := chooseRoundResult(ctx, w.tgClient, w.user)
 		if err != nil {
-			return fmt.Errorf("failed EndRound for user: %d): %w", w.user.TelegramID(), err)
-		}
-
-		err = w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), resultText)
-		if err != nil {
-			return fmt.Errorf("failed to send text message for user: %d in endRoundMessage: %w", w.user.TelegramID(), err)
-		}
-
-		err = chooseNewStart0(ctx, w.tgClient, w.user)
-		if err != nil {
-			return fmt.Errorf("failed chooseNewStart0 for user: %d): %w", w.user.TelegramID(), err)
+			return fmt.Errorf("failed chooseRoundResult for user: %d): %w", w.user.TelegramID(), err)
 		}
 		return nil
 	default:
@@ -68,9 +56,10 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 }
 
 func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
-	word, err := w.user.Word(w.number)
+	// TODO Send time left
+	word, err := w.user.CurrentWord()
 	if err != nil {
-		return fmt.Errorf("failed getting WordGuess (#%d): %w", w.number, err)
+		return fmt.Errorf("failed getting CurrentWord: %w", err)
 	}
 
 	err = w.tgClient.SendOneTimeReplyMarkup(
@@ -86,15 +75,15 @@ func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
 	return nil
 }
 
-func chooseWord(ctx context.Context, wordNumber uint16, client *telegram.Client, user *userEntity.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.NewWordKey(wordNumber))
+func chooseWordGuess(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
+	err := user.ChangeCurrentMenu(ctx, menuConstant.Word)
 	if err != nil {
-		return fmt.Errorf("failed in chooseWord changing current thisMenu: %w", err)
+		return fmt.Errorf("failed in chooseWordGuess changing menu: %w", err)
 	}
-	thisMenu := NewWordGuess(wordNumber, client, user)
+	thisMenu := NewWordGuess(client, user)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
-		return fmt.Errorf("failed sendDefaultMessage in chooseWord): %w", err)
+		return fmt.Errorf("failed sendDefaultMessage in chooseWordGuess): %w", err)
 	}
 	return nil
 }
@@ -102,20 +91,17 @@ func chooseWord(ctx context.Context, wordNumber uint16, client *telegram.Client,
 func (w WordGuess) options() []string {
 	return []string{
 		rightMessage,
-		nextMessage,
+		nextInWordGuessMessage,
 		endRoundMessage,
 	}
 }
 
 func (w WordGuess) saveWordResultAndGoToNextWord(ctx context.Context, result userConstant.WordResult) error {
-	err := w.user.UpdateWordResult(ctx, w.number, result)
+	w.user.SetCurrentWordResult(result)
+	w.user.NextWord()
+	err := chooseWordGuess(ctx, w.tgClient, w.user)
 	if err != nil {
-		return fmt.Errorf("failed updating WordResult (#%d - %d): %w", w.number, result, err)
-	}
-
-	err = chooseWord(ctx, w.number+1, w.tgClient, w.user)
-	if err != nil {
-		return fmt.Errorf("failed chooseWord for user: %d): %w", w.user.TelegramID(), err)
+		return fmt.Errorf("failed chooseWordGuess for user: %d): %w", w.user.TelegramID(), err)
 	}
 	return nil
 }

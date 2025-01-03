@@ -2,8 +2,8 @@ package db
 
 import (
 	dictionaryConstant "alias-game/internal/constant/dictionary"
-	menuConstant "alias-game/internal/constant/menu"
 	userConstant "alias-game/internal/constant/user"
+	"alias-game/internal/entity/user/db/user_info"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -22,35 +22,109 @@ type UserInfo struct {
 	// In seconds
 	PreferenceRoundTime uint16 `json:"prt"` //nolint:tagliatelle
 	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32                   `json:"ppc"`           //nolint:tagliatelle
-	PreferenceWordDifficulty uint8                     `json:"pwd"`           //nolint:tagliatelle
-	DictionaryHistory        []DictionaryCount         `json:"dc,omitempty"`  //nolint:tagliatelle
-	RoundStartTime           time.Time                 `json:"rst"`           //nolint:tagliatelle
-	RoundEndTime             time.Time                 `json:"ret"`           //nolint:tagliatelle
-	RoundDictionaryKey       dictionaryConstant.Key    `json:"rdk"`           //nolint:tagliatelle
-	RoundWords               []string                  `json:"rw,omitempty"`  //nolint:tagliatelle
-	RoundWordResults         []userConstant.WordResult `json:"rwr,omitempty"` //nolint:tagliatelle
+	PreferencePenaltyCost    float32                     `json:"ppc"`          //nolint:tagliatelle
+	PreferenceWordDifficulty uint8                       `json:"pwd"`          //nolint:tagliatelle
+	DictionaryHistory        []user_info.DictionaryCount `json:"dc,omitempty"` //nolint:tagliatelle
+	RoundStartTime           time.Time                   `json:"rst"`          //nolint:tagliatelle
+	RoundEndTime             time.Time                   `json:"ret"`          //nolint:tagliatelle
+	RoundDictionaryKey       dictionaryConstant.Key      `json:"rdk"`          //nolint:tagliatelle
+	// Starts with 0 (index in RoundWords slice)
+	RoundWordNumber uint16 `json:"rwn"` //nolint:tagliatelle
+	// Starts with 0 (index in AllTeamsInfo slice)
+	RoundTeamNumber  uint16                    `json:"rtn"`           //nolint:tagliatelle
+	RoundWords       []string                  `json:"rw,omitempty"`  //nolint:tagliatelle
+	RoundWordResults []userConstant.WordResult `json:"rwr,omitempty"` //nolint:tagliatelle
+	WordCountToWin   uint16                    `json:"wctw"`          //nolint:tagliatelle
+	AllTeamsInfo     []user_info.TeamInfo      `json:"ati,omitempty"` //nolint:tagliatelle
 }
 
-func (u *UserInfo) AddWordResult(wordNumber uint16, wordResult userConstant.WordResult) {
+func (u *UserInfo) Word(wordNumber uint16) (string, error) {
+	if int(wordNumber) >= len(u.RoundWords)-1 {
+		return "", fmt.Errorf("wordNumber %d is too much for RoundWords slice of %d", wordNumber, len(u.RoundWords))
+	}
+	return u.RoundWords[wordNumber], nil
+}
+
+func (u *UserInfo) SetRoundWordResult(wordNumber uint16, wordResult userConstant.WordResult) {
 	u.AddLastRequest()
-	u.CurrentMenu = string(menuConstant.NewWordKey(wordNumber))
 
 	if u.RoundWordResults == nil {
-		u.RoundWordResults = make([]userConstant.WordResult, wordNumber+1)
+		u.RoundWordResults = []userConstant.WordResult{}
 	}
 
 	if int(wordNumber) >= len(u.RoundWordResults) {
 		u.RoundWordResults = append(
 			u.RoundWordResults,
-			make(
-				[]userConstant.WordResult,
-				int(wordNumber)-len(u.RoundWordResults)+1,
-			)...,
+			wordResult,
 		)
+	} else {
+		u.RoundWordResults[wordNumber] = wordResult
+	}
+}
+
+func (u *UserInfo) AddRoundResult(correctAnswers, incorrectAnswers, skippedAnswers int) error {
+	err := u.checkAllTeamsInfoComparedToRoundNumber()
+	if err != nil {
+		return fmt.Errorf("failed check in AddRoundResult: %w", err)
 	}
 
-	u.RoundWordResults[wordNumber] = wordResult
+	currentTeam := &u.AllTeamsInfo[u.RoundTeamNumber]
+
+	currentTeam.RoundResults = append(
+		currentTeam.RoundResults,
+		user_info.RoundResult{
+			CorrectAnswersCount:   uint16(correctAnswers),
+			IncorrectAnswersCount: uint16(incorrectAnswers),
+			SkippedAnswersCount:   uint16(skippedAnswers),
+		},
+	)
+
+	return nil
+}
+
+func (u *UserInfo) checkAllTeamsInfoComparedToRoundNumber() error {
+	if u.AllTeamsInfo == nil {
+		return fmt.Errorf("allTeamsInfo is nil, but RoundTeamNumber is %d", u.RoundTeamNumber)
+	}
+
+	allTeamCount := u.AllTeamCount()
+
+	if allTeamCount == 1 {
+		return nil
+	}
+
+	if u.RoundTeamNumber >= allTeamCount {
+		return fmt.Errorf("RoundTeamNumber is %d, but AllTeamsInfo count is %d", u.RoundTeamNumber, allTeamCount)
+	}
+	return nil
+}
+
+func (u *UserInfo) IsGameEnd() (bool, error) {
+	err := u.checkAllTeamsInfoComparedToRoundNumber()
+	if err != nil {
+		return false, fmt.Errorf("failed check in IsGameEnded: %w", err)
+	}
+
+	// All teams should have equal number of rounds before check
+	maxRounds := len(u.AllTeamsInfo[0].RoundResults)
+	for _, team := range u.AllTeamsInfo[1:] {
+		if len(team.RoundResults) != maxRounds {
+			return false, nil
+		}
+	}
+
+	for _, team := range u.AllTeamsInfo {
+		totalCorrectForTeam := uint16(0)
+		for _, round := range team.RoundResults {
+			totalCorrectForTeam += round.CorrectAnswersCount
+		}
+
+		if totalCorrectForTeam >= u.WordCountToWin {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (u *UserInfo) AddLastRequest() {
@@ -61,7 +135,7 @@ func (u *UserInfo) ChooseAnotherDictionary(dictionaryKey dictionaryConstant.Key)
 	u.RoundDictionaryKey = dictionaryKey
 
 	if u.DictionaryHistory == nil {
-		u.DictionaryHistory = []DictionaryCount{
+		u.DictionaryHistory = []user_info.DictionaryCount{
 			{DictionaryKey: dictionaryKey, Count: 1},
 		}
 		return
@@ -74,7 +148,7 @@ func (u *UserInfo) ChooseAnotherDictionary(dictionaryKey dictionaryConstant.Key)
 		}
 	}
 
-	u.DictionaryHistory = append(u.DictionaryHistory, DictionaryCount{
+	u.DictionaryHistory = append(u.DictionaryHistory, user_info.DictionaryCount{
 		DictionaryKey: dictionaryKey,
 		Count:         1,
 	})
@@ -100,7 +174,11 @@ func (u *UserInfo) UnmarshalBinary(data []byte) error {
 		u.RoundWords = []string{}
 	}
 	if u.DictionaryHistory == nil {
-		u.DictionaryHistory = []DictionaryCount{}
+		u.DictionaryHistory = []user_info.DictionaryCount{}
 	}
 	return nil
+}
+
+func (u UserInfo) AllTeamCount() uint16 {
+	return uint16(len(u.AllTeamsInfo))
 }

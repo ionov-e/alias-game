@@ -1,4 +1,4 @@
-package db
+package user_info
 
 import (
 	dictionaryConstant "alias-game/internal/constant/dictionary"
