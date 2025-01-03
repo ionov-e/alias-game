@@ -13,7 +13,7 @@ type MenuServiceInterface interface {
 	Respond(ctx context.Context, message string) error
 }
 
-func MenuFactory(tgClient telegram.Client, user *userEntity.User) (MenuServiceInterface, error) {
+func MenuFactory(tgClient *telegram.Client, user *userEntity.User) (MenuServiceInterface, error) {
 	menuKeyString := user.CurrentMenuKey()
 	menuKey := menuConstant.Key(menuKeyString)
 

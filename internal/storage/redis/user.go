@@ -20,13 +20,13 @@ func NewUser(client *redis.Client) *User {
 	return &User{client: client}
 }
 
-func (r *User) UserInfoFromTelegramUser(ctx context.Context, user tgTypes.User) (userDB.UserInfo, error) {
+func (r *User) UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User) (*userDB.UserInfo, error) {
 	var userInfo userDB.UserInfo
 	key := r.keyForUserInfo(user.ID)
 	err := r.client.Get(ctx, key).Scan(&userInfo)
 
 	if !errors.Is(err, redis.Nil) {
-		return userInfo, nil
+		return &userInfo, nil
 	}
 
 	newUserInfo := userDB.UserInfo{
@@ -39,10 +39,10 @@ func (r *User) UserInfoFromTelegramUser(ctx context.Context, user tgTypes.User) 
 	err = r.client.Set(ctx, key, newUserInfo, 0).Err()
 
 	if err != nil {
-		return newUserInfo, fmt.Errorf("setting key %s in redis for creating userInfo failed: %w", key, err)
+		return &newUserInfo, fmt.Errorf("setting key %s in redis for creating userInfo failed: %w", key, err)
 	}
 
-	return newUserInfo, nil
+	return &newUserInfo, nil
 }
 
 func (r *User) SaveUserInfo(ctx context.Context, userInfo *userDB.UserInfo) error {

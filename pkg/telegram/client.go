@@ -19,8 +19,8 @@ type Client struct {
 	client http.Client
 }
 
-func New(token string) Client {
-	return Client{
+func New(token string) *Client {
+	return &Client{
 		token:  token,
 		client: http.Client{},
 	}

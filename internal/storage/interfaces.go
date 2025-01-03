@@ -7,6 +7,6 @@ import (
 )
 
 type UserDBInterface interface {
-	UserInfoFromTelegramUser(ctx context.Context, user tgTypes.User) (userDB.UserInfo, error)
+	UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User) (*userDB.UserInfo, error)
 	SaveUserInfo(ctx context.Context, userInfo *userDB.UserInfo) error
 }

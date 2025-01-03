@@ -17,13 +17,13 @@ type lastUpdateIDDBInterface interface {
 }
 
 type App struct {
-	tgClient       telegram.Client
+	tgClient       *telegram.Client
 	lastUpdateIDDB lastUpdateIDDBInterface
 	userDB         storage.UserDBInterface
 }
 
 func New(
-	tgClient telegram.Client,
+	tgClient *telegram.Client,
 	lastUpdateIDDB lastUpdateIDDBInterface,
 	userDB storage.UserDBInterface,
 ) App {

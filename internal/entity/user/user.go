@@ -18,16 +18,16 @@ const gameResultString = "Результат игры"
 const correctAnswersCountString = "Количество правильных ответов"
 
 type User struct {
-	userInfo userDB.UserInfo
+	userInfo *userDB.UserInfo
 	db       storage.UserDBInterface
 }
 
-func NewFromTelegramUser(ctx context.Context, db storage.UserDBInterface, tgUser *tgTypes.User) (User, error) {
-	userInfo, err := db.UserInfoFromTelegramUser(ctx, *tgUser)
+func NewFromTelegramUser(ctx context.Context, db storage.UserDBInterface, tgUser *tgTypes.User) (*User, error) {
+	userInfo, err := db.UserInfoFromTelegramUser(ctx, tgUser)
 	if err != nil {
-		return User{}, fmt.Errorf("error getting userInfo: %w", err)
+		return nil, fmt.Errorf("error getting userInfo: %w", err)
 	}
-	return User{userInfo: userInfo, db: db}, nil
+	return &User{userInfo: userInfo, db: db}, nil
 }
 
 func (u *User) TelegramID() int64 {

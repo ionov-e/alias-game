@@ -12,11 +12,11 @@ import (
 
 type Responder struct {
 	tgUpdate tgTypes.Update
-	tgClient telegram.Client
+	tgClient *telegram.Client
 	userDB   storage.UserDBInterface
 }
 
-func New(tgUpdate tgTypes.Update, tgClient telegram.Client, userDB storage.UserDBInterface) Responder {
+func New(tgUpdate tgTypes.Update, tgClient *telegram.Client, userDB storage.UserDBInterface) Responder {
 	return Responder{
 		tgUpdate: tgUpdate,
 		tgClient: tgClient,
@@ -30,12 +30,12 @@ func (r *Responder) Run(ctx context.Context) error {
 		return fmt.Errorf("failed at extracting from tgUpdate: %+v, error: %w", r.tgUpdate, err)
 	}
 
-	user, err := userEntity.NewFromTelegramUser(ctx, r.userDB, &tgUser)
+	user, err := userEntity.NewFromTelegramUser(ctx, r.userDB, tgUser)
 	if err != nil {
 		return fmt.Errorf("error getting user from Update.CallbackQuery: %w", err)
 	}
 
-	currentMenu, err := helper.MenuFactory(r.tgClient, &user)
+	currentMenu, err := helper.MenuFactory(r.tgClient, user)
 	if err != nil {
 		return fmt.Errorf("error getting choice from CallbackQuery.Message.Text: %w", err)
 	}
