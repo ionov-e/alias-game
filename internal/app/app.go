@@ -57,16 +57,22 @@ func (a *App) Run(ctx context.Context) error {
 		}
 
 		var wg sync.WaitGroup
+	loopUpdates:
 		for _, updateResponse := range updates {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			select {
+			case <-ctx.Done():
+				break loopUpdates
+			default:
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
 
-				process := responder.New(updateResponse, a.tgClient, a.userDB)
-				if err = process.Run(ctx); err != nil {
-					log.Printf("Failed at responding to update: %+v, error: %v", updateResponse, err)
-				}
-			}()
+					process := responder.New(updateResponse, a.tgClient, a.userDB)
+					if err = process.Run(ctx); err != nil {
+						log.Printf("Failed at responding to update: %+v, error: %v", updateResponse, err)
+					}
+				}()
+			}
 		}
 		wg.Wait() //TODO think about limit (worker)
 	}
