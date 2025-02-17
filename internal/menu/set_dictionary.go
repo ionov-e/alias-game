@@ -3,7 +3,7 @@ package menu
 import (
 	dictionaryConstant "alias-game/internal/constant/dictionary"
 	menuConstant "alias-game/internal/constant/menu"
-	userEntity "alias-game/internal/entity/user"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
@@ -13,13 +13,13 @@ import (
 
 type SetDictionary0 struct {
 	tgClient *telegram.Client
-	user     *userEntity.User
+	user     *user.User
 }
 
 const easy1DictionaryNameMessage = "Легкий словарь"
 const backMessage = "Назад"
 
-func NewSetDictionary0(tgClient *telegram.Client, user *userEntity.User) SetDictionary0 {
+func NewSetDictionary0(tgClient *telegram.Client, user *user.User) SetDictionary0 {
 	return SetDictionary0{
 		tgClient: tgClient,
 		user:     user,
@@ -60,7 +60,7 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 }
 
 // TODO get rid of these methods
-func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
+func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user *user.User) error {
 	err := user.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
 	if err != nil {
 		return fmt.Errorf("failed in chooseDictionaryChoice0 changing current menu: %w", err)

@@ -3,7 +3,7 @@ package menu
 import (
 	menuConstant "alias-game/internal/constant/menu"
 	userConstant "alias-game/internal/constant/user"
-	userEntity "alias-game/internal/entity/user"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
@@ -13,14 +13,14 @@ import (
 
 type WordGuess struct {
 	tgClient *telegram.Client
-	user     *userEntity.User
+	user     *user.User
 }
 
 const rightMessage = "Верно"
 const nextInWordGuessMessage = "Следующее"
 const endRoundMessage = "Закончить раунд"
 
-func NewWordGuess(tgClient *telegram.Client, user *userEntity.User) WordGuess {
+func NewWordGuess(tgClient *telegram.Client, user *user.User) WordGuess {
 	return WordGuess{
 		tgClient: tgClient,
 		user:     user,
@@ -75,7 +75,7 @@ func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
 	return nil
 }
 
-func chooseWordGuess(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
+func chooseWordGuess(ctx context.Context, client *telegram.Client, user *user.User) error {
 	err := user.ChangeCurrentMenu(ctx, menuConstant.Word)
 	if err != nil {
 		return fmt.Errorf("failed in chooseWordGuess changing menu: %w", err)

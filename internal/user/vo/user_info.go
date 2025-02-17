@@ -1,14 +1,14 @@
-package db
+package vo
 
 import (
 	dictionaryConstant "alias-game/internal/constant/dictionary"
 	userConstant "alias-game/internal/constant/user"
-	"alias-game/internal/entity/user/db/user_info"
 	"encoding/json"
 	"fmt"
 	"time"
 )
 
+// UserInfo represents Value object stored
 type UserInfo struct {
 	TelegramID               int64     `json:"i"`    //nolint:tagliatelle
 	CurrentMenu              string    `json:"cm"`   //nolint:tagliatelle
@@ -22,12 +22,12 @@ type UserInfo struct {
 	// In seconds
 	PreferenceRoundTime uint16 `json:"prt"` //nolint:tagliatelle
 	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32                     `json:"ppc"`          //nolint:tagliatelle
-	PreferenceWordDifficulty uint8                       `json:"pwd"`          //nolint:tagliatelle
-	DictionaryHistory        []user_info.DictionaryCount `json:"dc,omitempty"` //nolint:tagliatelle
-	RoundStartTime           time.Time                   `json:"rst"`          //nolint:tagliatelle
-	RoundEndTime             time.Time                   `json:"ret"`          //nolint:tagliatelle
-	RoundDictionaryKey       dictionaryConstant.Key      `json:"rdk"`          //nolint:tagliatelle
+	PreferencePenaltyCost    float32                `json:"ppc"`          //nolint:tagliatelle
+	PreferenceWordDifficulty uint8                  `json:"pwd"`          //nolint:tagliatelle
+	DictionaryHistory        []dictionaryCount      `json:"dc,omitempty"` //nolint:tagliatelle
+	RoundStartTime           time.Time              `json:"rst"`          //nolint:tagliatelle
+	RoundEndTime             time.Time              `json:"ret"`          //nolint:tagliatelle
+	RoundDictionaryKey       dictionaryConstant.Key `json:"rdk"`          //nolint:tagliatelle
 	// Starts with 0 (index in RoundWords slice)
 	RoundWordNumber uint16 `json:"rwn"` //nolint:tagliatelle
 	// Starts with 0 (index in AllTeamsInfo slice)
@@ -35,7 +35,23 @@ type UserInfo struct {
 	RoundWords       []string                  `json:"rw,omitempty"`  //nolint:tagliatelle
 	RoundWordResults []userConstant.WordResult `json:"rwr,omitempty"` //nolint:tagliatelle
 	WordCountToWin   uint16                    `json:"wctw"`          //nolint:tagliatelle
-	AllTeamsInfo     []user_info.TeamInfo      `json:"ati,omitempty"` //nolint:tagliatelle
+	AllTeamsInfo     []TeamInfo                `json:"ati,omitempty"` //nolint:tagliatelle
+}
+
+type TeamInfo struct {
+	Name         string        `json:"n"`  //nolint:tagliatelle
+	RoundResults []roundResult `json:"rr"` //nolint:tagliatelle
+}
+
+type roundResult struct {
+	CorrectAnswersCount   uint16
+	IncorrectAnswersCount uint16
+	SkippedAnswersCount   uint16
+}
+
+type dictionaryCount struct {
+	DictionaryKey dictionaryConstant.Key `json:"d"` //nolint:tagliatelle
+	Count         uint16                 `json:"c"` //nolint:tagliatelle
 }
 
 func (u *UserInfo) Word(wordNumber uint16) (string, error) {
@@ -72,7 +88,7 @@ func (u *UserInfo) AddRoundResult(correctAnswers, incorrectAnswers, skippedAnswe
 
 	currentTeam.RoundResults = append(
 		currentTeam.RoundResults,
-		user_info.RoundResult{
+		roundResult{
 			CorrectAnswersCount:   uint16(correctAnswers),
 			IncorrectAnswersCount: uint16(incorrectAnswers),
 			SkippedAnswersCount:   uint16(skippedAnswers),
@@ -135,7 +151,7 @@ func (u *UserInfo) ChooseAnotherDictionary(dictionaryKey dictionaryConstant.Key)
 	u.RoundDictionaryKey = dictionaryKey
 
 	if u.DictionaryHistory == nil {
-		u.DictionaryHistory = []user_info.DictionaryCount{
+		u.DictionaryHistory = []dictionaryCount{
 			{DictionaryKey: dictionaryKey, Count: 1},
 		}
 		return
@@ -148,7 +164,7 @@ func (u *UserInfo) ChooseAnotherDictionary(dictionaryKey dictionaryConstant.Key)
 		}
 	}
 
-	u.DictionaryHistory = append(u.DictionaryHistory, user_info.DictionaryCount{
+	u.DictionaryHistory = append(u.DictionaryHistory, dictionaryCount{
 		DictionaryKey: dictionaryKey,
 		Count:         1,
 	})
@@ -174,7 +190,7 @@ func (u *UserInfo) UnmarshalBinary(data []byte) error {
 		u.RoundWords = []string{}
 	}
 	if u.DictionaryHistory == nil {
-		u.DictionaryHistory = []user_info.DictionaryCount{}
+		u.DictionaryHistory = []dictionaryCount{}
 	}
 	return nil
 }

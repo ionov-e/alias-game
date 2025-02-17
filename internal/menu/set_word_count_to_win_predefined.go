@@ -2,7 +2,7 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userEntity "alias-game/internal/entity/user"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
@@ -17,10 +17,10 @@ const threeHundredChoiceMessage = "300"
 
 type SetWordCountToWinPredefined struct {
 	tgClient *telegram.Client
-	user     *userEntity.User
+	user     *user.User
 }
 
-func NewSetWordCountToWinPredefined(tgClient *telegram.Client, user *userEntity.User) SetWordCountToWinPredefined {
+func NewSetWordCountToWinPredefined(tgClient *telegram.Client, user *user.User) SetWordCountToWinPredefined {
 	return SetWordCountToWinPredefined{
 		tgClient: tgClient,
 		user:     user,
@@ -60,7 +60,7 @@ func (m SetWordCountToWinPredefined) setWordCountToWinAndGoToNextMenu(ctx contex
 	return nil
 }
 
-func chooseSetWordCountToWinPredefined(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
+func chooseSetWordCountToWinPredefined(ctx context.Context, client *telegram.Client, user *user.User) error {
 	err := user.ChangeCurrentMenu(ctx, menuConstant.SetWordCountToWinPredefined)
 	if err != nil {
 		return fmt.Errorf("failed in chooseSetWordCountToWinPredefined changing current menu: %w", err)

@@ -4,10 +4,8 @@ import (
 	dictionaryConstant "alias-game/internal/constant/dictionary"
 	menuConstant "alias-game/internal/constant/menu"
 	userConstant "alias-game/internal/constant/user"
-	userDB "alias-game/internal/entity/user/db"
-	"alias-game/internal/entity/user/db/user_info"
-	dictionaryCollection "alias-game/internal/entity/user/dictionary"
-	"alias-game/internal/storage"
+	dictionaryCollection "alias-game/internal/user/dictionary"
+	"alias-game/internal/user/vo"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"errors"
@@ -21,11 +19,16 @@ const incorrectAnswersCountString = "Неправильных ответов"
 const skippedAnswersCountString = "Пропущенных ответов"
 
 type User struct {
-	userInfo *userDB.UserInfo
-	db       storage.UserDBInterface
+	userInfo *vo.UserInfo
+	db       UserDBInterface
 }
 
-func NewFromTelegramUser(ctx context.Context, db storage.UserDBInterface, tgUser *tgTypes.User) (*User, error) {
+type UserDBInterface interface {
+	UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User) (*vo.UserInfo, error)
+	SaveUserInfo(ctx context.Context, userInfo *vo.UserInfo) error
+}
+
+func NewFromTelegramUser(ctx context.Context, db UserDBInterface, tgUser *tgTypes.User) (*User, error) {
 	userInfo, err := db.UserInfoFromTelegramUser(ctx, tgUser)
 	if err != nil {
 		return nil, fmt.Errorf("error getting userInfo: %w", err)
@@ -188,7 +191,7 @@ func (u *User) NextWord() {
 
 func (u *User) SetTeamCount(count uint16) {
 	u.userInfo.AddLastRequest()
-	u.userInfo.AllTeamsInfo = make([]user_info.TeamInfo, count)
+	u.userInfo.AllTeamsInfo = make([]vo.TeamInfo, count)
 }
 
 func (u *User) InfoForFillingTeamNames() (firstTeamNumberWithoutName, totalTeamCount uint16, err error) {
@@ -234,7 +237,7 @@ func (u *User) GameResult() []userConstant.TeamInfo {
 	return convertTeamInfo(u.userInfo.AllTeamsInfo)
 }
 
-func convertTeamInfo(info []user_info.TeamInfo) []userConstant.TeamInfo {
+func convertTeamInfo(info []vo.TeamInfo) []userConstant.TeamInfo {
 	converted := make([]userConstant.TeamInfo, len(info))
 
 	for i, teamInfo := range info {

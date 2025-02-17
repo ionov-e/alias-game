@@ -2,7 +2,7 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userEntity "alias-game/internal/entity/user"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
@@ -19,10 +19,10 @@ const nextWord2Message = "Дальше"
 
 type RoundResult struct {
 	tgClient *telegram.Client
-	user     *userEntity.User
+	user     *user.User
 }
 
-func NewRoundResult(tgClient *telegram.Client, user *userEntity.User) RoundResult {
+func NewRoundResult(tgClient *telegram.Client, user *user.User) RoundResult {
 	return RoundResult{
 		tgClient: tgClient,
 		user:     user,
@@ -79,7 +79,7 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 	}
 }
 
-func chooseRoundResult(ctx context.Context, tgClient *telegram.Client, user *userEntity.User) error {
+func chooseRoundResult(ctx context.Context, tgClient *telegram.Client, user *user.User) error {
 	err := user.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
 	if err != nil {
 		return fmt.Errorf("failed in chooseRoundResult changing current menu: %w", err)

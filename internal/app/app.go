@@ -1,9 +1,8 @@
 package app
 
 import (
-	userEntity "alias-game/internal/entity/user"
 	"alias-game/internal/helper"
-	"alias-game/internal/storage"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	"context"
 	"fmt" //nolint:goimports
@@ -20,13 +19,13 @@ type lastUpdateIDDBInterface interface {
 type App struct {
 	tgClient       *telegram.Client
 	lastUpdateIDDB lastUpdateIDDBInterface
-	userDB         storage.UserDBInterface
+	userDB         user.UserDBInterface
 }
 
 func New(
 	tgClient *telegram.Client,
 	lastUpdateIDDB lastUpdateIDDBInterface,
-	userDB storage.UserDBInterface,
+	userDB user.UserDBInterface,
 ) App {
 	return App{
 		tgClient:       tgClient,
@@ -74,13 +73,13 @@ func (a *App) Run(ctx context.Context) error { // TODO no return
 						return
 					}
 
-					user, err := userEntity.NewFromTelegramUser(ctx, a.userDB, tgUser)
+					u, err := user.NewFromTelegramUser(ctx, a.userDB, tgUser)
 					if err != nil {
-						log.Printf("error getting user from Update.CallbackQuery: %v", err)
+						log.Printf("error getting u from Update.CallbackQuery: %v", err)
 						return
 					}
 
-					menu, err := helper.MenuFactory(a.tgClient, user)
+					menu, err := helper.MenuFactory(a.tgClient, u)
 					if err != nil {
 						log.Printf("error getting choice from CallbackQuery.Message.Text: %v", err)
 						return

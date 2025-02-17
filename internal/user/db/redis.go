@@ -1,8 +1,8 @@
-package redis
+package db
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userDB "alias-game/internal/entity/user/db"
+	"alias-game/internal/user/vo"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"errors"
@@ -12,16 +12,16 @@ import (
 	"time" //nolint:nolintlint,goimports
 )
 
-type User struct {
+type UserRedisClient struct {
 	client *redis.Client
 }
 
-func NewUser(client *redis.Client) *User {
-	return &User{client: client}
+func NewUser(client *redis.Client) *UserRedisClient {
+	return &UserRedisClient{client: client}
 }
 
-func (r *User) UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User) (*userDB.UserInfo, error) {
-	var userInfo userDB.UserInfo
+func (r *UserRedisClient) UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User) (*vo.UserInfo, error) {
+	var userInfo vo.UserInfo
 	key := r.keyForUserInfo(user.ID)
 	err := r.client.Get(ctx, key).Scan(&userInfo)
 
@@ -29,7 +29,7 @@ func (r *User) UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User)
 		return &userInfo, nil
 	}
 
-	newUserInfo := userDB.UserInfo{
+	newUserInfo := vo.UserInfo{
 		TelegramID:         user.ID,
 		Name:               user.FirstName,
 		CurrentMenu:        string(menuConstant.Start0),
@@ -45,7 +45,7 @@ func (r *User) UserInfoFromTelegramUser(ctx context.Context, user *tgTypes.User)
 	return &newUserInfo, nil
 }
 
-func (r *User) SaveUserInfo(ctx context.Context, userInfo *userDB.UserInfo) error {
+func (r *UserRedisClient) SaveUserInfo(ctx context.Context, userInfo *vo.UserInfo) error {
 	key := r.keyForUserInfo(userInfo.TelegramID)
 
 	err := r.client.Set(ctx, key, userInfo, 0).Err()
@@ -56,6 +56,6 @@ func (r *User) SaveUserInfo(ctx context.Context, userInfo *userDB.UserInfo) erro
 	return nil
 }
 
-func (r *User) keyForUserInfo(userID int64) string {
+func (r *UserRedisClient) keyForUserInfo(userID int64) string {
 	return "user:" + strconv.FormatInt(userID, 10)
 }

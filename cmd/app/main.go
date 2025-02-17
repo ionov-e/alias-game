@@ -4,6 +4,7 @@ import (
 	"alias-game/internal/app"
 	"alias-game/internal/helper/setup"
 	localRedis "alias-game/internal/storage/redis"
+	userDB "alias-game/internal/user/db"
 	"alias-game/pkg/telegram"
 	"context"
 	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
@@ -35,14 +36,14 @@ func main() {
 		}
 	}()
 	lastUpdateIDDB := localRedis.NewLastUpdateID(redisClient)
-	userDB := localRedis.NewUser(redisClient)
+	dbForUser := userDB.NewUser(redisClient)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	log.Println("App started")
 
-	process := app.New(tgClient, &lastUpdateIDDB, userDB)
+	process := app.New(tgClient, &lastUpdateIDDB, dbForUser)
 	if err := process.Run(ctx); err != nil {
 		log.Panic(err)
 	}

@@ -2,7 +2,7 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userEntity "alias-game/internal/entity/user"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
@@ -17,10 +17,10 @@ const threeMinutesChoiceMessage = "3 минуты"
 
 type SetRoundTimePredefined struct {
 	tgClient *telegram.Client
-	user     *userEntity.User
+	user     *user.User
 }
 
-func NewSetRoundTimePredefined(tgClient *telegram.Client, user *userEntity.User) SetRoundTimePredefined {
+func NewSetRoundTimePredefined(tgClient *telegram.Client, user *user.User) SetRoundTimePredefined {
 	return SetRoundTimePredefined{
 		tgClient: tgClient,
 		user:     user,
@@ -62,7 +62,7 @@ func (m SetRoundTimePredefined) setRoundTimeAndGoToNextMenu(ctx context.Context,
 	return nil
 }
 
-func chooseSetRoundTime(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
+func chooseSetRoundTime(ctx context.Context, client *telegram.Client, user *user.User) error {
 	err := user.ChangeCurrentMenu(ctx, menuConstant.SetRoundTimePredefined)
 	if err != nil {
 		return fmt.Errorf("failed in chooseSetRoundTime changing current menu: %w", err)
