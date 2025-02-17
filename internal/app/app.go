@@ -1,7 +1,8 @@
 package app
 
 import (
-	"alias-game/internal/service/responder"
+	userEntity "alias-game/internal/entity/user"
+	"alias-game/internal/helper"
 	"alias-game/internal/storage"
 	"alias-game/pkg/telegram"
 	"context"
@@ -58,7 +59,7 @@ func (a *App) Run(ctx context.Context) error {
 
 		var wg sync.WaitGroup
 	loopUpdates:
-		for _, updateResponse := range updates {
+		for _, tgUpdate := range updates {
 			select {
 			case <-ctx.Done():
 				break loopUpdates
@@ -67,9 +68,27 @@ func (a *App) Run(ctx context.Context) error {
 				go func() {
 					defer wg.Done()
 
-					process := responder.New(updateResponse, a.tgClient, a.userDB)
-					if err = process.Run(ctx); err != nil {
-						log.Printf("Failed at responding to update: %+v, error: %v", updateResponse, err)
+					tgUser, text, err := helper.ExtractFromUpdate(tgUpdate)
+					if err != nil {
+						log.Printf("failed at extracting from tgUpdate: %+v, error: %v", tgUpdate, err)
+						return
+					}
+
+					user, err := userEntity.NewFromTelegramUser(ctx, a.userDB, tgUser)
+					if err != nil {
+						log.Printf("error getting user from Update.CallbackQuery: %v", err)
+						return
+					}
+
+					menu, err := helper.MenuFactory(a.tgClient, user)
+					if err != nil {
+						log.Printf("error getting choice from CallbackQuery.Message.Text: %v", err)
+						return
+					}
+
+					if err = menu.Respond(ctx, text); err != nil {
+						log.Printf("failed at responding to tgUpdate: %+v, error: %v", tgUpdate, err)
+						return
 					}
 				}()
 			}

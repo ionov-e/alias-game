@@ -2,7 +2,7 @@ package main
 
 import (
 	"alias-game/internal/app"
-	"alias-game/internal/service/setup"
+	"alias-game/internal/helper/setup"
 	localRedis "alias-game/internal/storage/redis"
 	"alias-game/pkg/telegram"
 	"context"

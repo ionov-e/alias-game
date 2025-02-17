@@ -3,17 +3,17 @@ package helper
 import (
 	menuConstant "alias-game/internal/constant/menu"
 	userEntity "alias-game/internal/entity/user"
-	"alias-game/internal/service/responder/menu"
+	"alias-game/internal/menu"
 	"alias-game/pkg/telegram"
 	"context"
 	"fmt"
 )
 
-type MenuServiceInterface interface {
+type MenuInterface interface {
 	Respond(ctx context.Context, message string) error
 }
 
-func MenuFactory(tgClient *telegram.Client, user *userEntity.User) (MenuServiceInterface, error) {
+func MenuFactory(tgClient *telegram.Client, user *userEntity.User) (MenuInterface, error) {
 	menuKeyString := user.CurrentMenuKey()
 	menuKey := menuConstant.Key(menuKeyString)
 
