@@ -3,7 +3,7 @@ package main
 import (
 	"alias-game/internal/app"
 	"alias-game/internal/helper/setup"
-	localRedis "alias-game/internal/storage/redis"
+	"alias-game/internal/last_update_id"
 	userDB "alias-game/internal/user/db"
 	"alias-game/pkg/telegram"
 	"context"
@@ -35,15 +35,14 @@ func main() {
 			log.Printf("Error closing Redis client: %v", err)
 		}
 	}()
-	lastUpdateIDDB := localRedis.NewLastUpdateID(redisClient)
-	dbForUser := userDB.NewUser(redisClient)
+	dbForLastUpdateID := last_update_id.NewLastUpdateIDRedisClient(redisClient)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	log.Println("App started")
 
-	process := app.New(tgClient, &lastUpdateIDDB, dbForUser)
+	process := app.New(tgClient, &dbForLastUpdateID, dbForUser)
 	if err := process.Run(ctx); err != nil {
 		log.Panic(err)
 	}
