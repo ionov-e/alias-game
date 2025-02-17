@@ -59,6 +59,7 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 	}
 }
 
+// TODO get rid of these methods
 func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user *userEntity.User) error {
 	err := user.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
 	if err != nil {

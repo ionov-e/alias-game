@@ -16,7 +16,7 @@ func main() {
 	if err := setup.Logging(); err != nil {
 		log.Fatal(err)
 	}
-
+	//TODO config
 	tgBotToken, err := setup.TelegramBotToken()
 	if err != nil {
 		log.Fatal(err)

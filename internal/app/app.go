@@ -35,7 +35,7 @@ func New(
 	}
 }
 
-func (a *App) Run(ctx context.Context) error {
+func (a *App) Run(ctx context.Context) error { // TODO no return
 	offsetAsUpdateID, err := a.lastUpdateIDDB.LastUpdateID(ctx)
 	if err != nil {
 		return fmt.Errorf("failed at getting lastUpdateID: %w", err)

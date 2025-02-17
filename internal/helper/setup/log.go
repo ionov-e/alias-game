@@ -18,6 +18,6 @@ func Logging() error {
 	if err != nil {
 		return fmt.Errorf("opening log file failed: %w", err)
 	}
-	log.SetOutput(file)
+	log.SetOutput(file) // TODO slog or implement similar
 	return nil
 }
