@@ -5,7 +5,7 @@ import (
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	"context"
-	"fmt" //nolint:goimports
+	"fmt" //nolint:nolintlint,goimports
 	"log"
 	"sync"
 	"time"
@@ -19,13 +19,13 @@ type lastUpdateIDDBInterface interface {
 type App struct {
 	tgClient       *telegram.Client
 	lastUpdateIDDB lastUpdateIDDBInterface
-	userDB         user.UserDBInterface
+	userDB         user.DBForUserInterface
 }
 
 func New(
 	tgClient *telegram.Client,
 	lastUpdateIDDB lastUpdateIDDBInterface,
-	userDB user.UserDBInterface,
+	userDB user.DBForUserInterface,
 ) App {
 	return App{
 		tgClient:       tgClient,

@@ -4,7 +4,7 @@ import (
 	"alias-game/internal/app"
 	"alias-game/internal/helper/setup"
 	"alias-game/internal/last_update_id"
-	userDB "alias-game/internal/user/db"
+	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	"context"
 	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
@@ -36,6 +36,7 @@ func main() {
 		}
 	}()
 	dbForLastUpdateID := last_update_id.NewLastUpdateIDRedisClient(redisClient)
+	dbForUser := user.NewRedisClient(redisClient)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

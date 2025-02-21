@@ -1,6 +1,6 @@
-package dictionary
+package user
 
-func Ease1List() []string {
+func ease1List() []string {
 	return append(
 		append(
 			ease1Nouns(),

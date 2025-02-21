@@ -1,8 +1,8 @@
 package menu
 
 import (
-	dictionaryConstant "alias-game/internal/constant/dictionary"
 	menuConstant "alias-game/internal/constant/menu"
+	userConstant "alias-game/internal/constant/user"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
@@ -19,17 +19,17 @@ type SetDictionary0 struct {
 const easy1DictionaryNameMessage = "Легкий словарь"
 const backMessage = "Назад"
 
-func NewSetDictionary0(tgClient *telegram.Client, user *user.User) SetDictionary0 {
+func NewSetDictionary0(tgClient *telegram.Client, u *user.User) SetDictionary0 {
 	return SetDictionary0{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
 func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 	switch message {
 	case easy1DictionaryNameMessage:
-		err := m.user.ChooseDictionary(ctx, dictionaryConstant.Easy1)
+		err := m.user.ChooseDictionary(ctx, userConstant.Easy1)
 		if err != nil {
 			return fmt.Errorf("failed ChooseDictionary in SetDictionary: %w", err)
 		}
@@ -60,12 +60,12 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 }
 
 // TODO get rid of these methods
-func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
+func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
 	if err != nil {
 		return fmt.Errorf("failed in chooseDictionaryChoice0 changing current menu: %w", err)
 	}
-	thisMenu := NewSetDictionary0(client, user)
+	thisMenu := NewSetDictionary0(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseDictionaryChoice0: %w", err)
