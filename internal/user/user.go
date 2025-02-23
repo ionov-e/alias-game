@@ -204,62 +204,36 @@ func (u *User) LastRoundResult() (words []string, results []WordResult) {
 
 func (u *User) CurrentGameResul() string {
 	u.data.addLastRequest()
-	gameResult := u.data.convertTeamInfo()
-	return "Текущие результаты игры:\n" + u.gameDetails(gameResult)
+	gameResult := u.data.calculateTeamInfoWithTotalResults()
+	return "Текущие результаты игры:\n" + u.endGameResultsAsString(gameResult)
 }
 
 func (u *User) EndGameResult() string {
 	u.data.addLastRequest()
-	gameResult := u.data.convertTeamInfo()
+	gameResult := u.data.calculateTeamInfoWithTotalResults()
 	winners := u.findWinners(gameResult)
 
 	var result string
 	if len(winners) == 1 {
-		result = fmt.Sprintf("Победитель: 🏆 %s\n", winners[0].Name)
+		result = fmt.Sprintf("Победитель: 🏆 %s\n", winners[0].TeamInfo.Name)
 	} else {
 		result = "Победу делят команды:\n"
 		for _, winner := range winners {
-			result += fmt.Sprintf("🏆 %s\n", winner.Name)
+			result += fmt.Sprintf("🏆 %s\n", winner.TeamInfo.Name)
 		}
 	}
 
-	result += "\n\nРезультаты:\n\n" + u.gameDetails(gameResult)
+	result += "\n\nРезультаты:\n\n" + u.endGameResultsAsString(gameResult)
 	return result
 }
 
-func (u *User) gameDetails(gameResult []TeamInfo) string {
-	var result string
-	for _, teamInfo := range gameResult {
-		result += fmt.Sprintf("\nКоманда %s:\n", teamInfo.Name)
-
-		if len(teamInfo.RoundResults) == 0 {
-			result += "\nЕще не было раундов\n"
-		}
-
-		for i, roundResult := range teamInfo.RoundResults {
-			result += fmt.Sprintf("Раунд %d)  ✅%d   ❌%d   ❔%d\n", i+1, roundResult.CorrectAnswersCount, roundResult.IncorrectAnswersCount, roundResult.SkippedAnswersCount)
-		}
-
-		if len(teamInfo.RoundResults) > 1 {
-			result += fmt.Sprintf(
-				"\nИтог за все раунды: ✅%d   ❌%d   ❔%d   (раундов %d)\n",
-				teamInfo.TotalCorrectAnswersCount,
-				teamInfo.TotalIncorrectAnswersCount,
-				teamInfo.TotalSkippedAnswersCount,
-				len(teamInfo.RoundResults),
-			)
-		}
-	}
-	return result
-}
-
-func (u *User) findWinners(teams []TeamInfo) []TeamInfo {
-	var winners []TeamInfo
+func (u *User) findWinners(teams []teamInfoWithTotalResults) []teamInfoWithTotalResults {
+	var winners []teamInfoWithTotalResults
 	var maxCorrect uint16
 
 	for _, team := range teams {
 		if team.TotalCorrectAnswersCount > maxCorrect {
-			winners = []TeamInfo{team}
+			winners = []teamInfoWithTotalResults{team}
 			maxCorrect = team.TotalCorrectAnswersCount
 		} else if team.TotalCorrectAnswersCount == maxCorrect { // Tie
 			winners = append(winners, team)
@@ -267,6 +241,32 @@ func (u *User) findWinners(teams []TeamInfo) []TeamInfo {
 	}
 
 	return winners
+}
+
+func (u *User) endGameResultsAsString(gameResult []teamInfoWithTotalResults) string {
+	var result string
+	for _, teamInfo := range gameResult {
+		result += fmt.Sprintf("\nКоманда %s:\n", teamInfo.TeamInfo.Name)
+
+		if len(teamInfo.TeamInfo.RoundResults) == 0 {
+			result += "\nЕще не было раундов\n"
+		}
+
+		for i, roundResult := range teamInfo.TeamInfo.RoundResults {
+			result += fmt.Sprintf("Раунд %d)  ✅%d   ❌%d   ❔%d\n", i+1, roundResult.CorrectAnswersCount, roundResult.IncorrectAnswersCount, roundResult.SkippedAnswersCount)
+		}
+
+		if len(teamInfo.TeamInfo.RoundResults) > 1 {
+			result += fmt.Sprintf(
+				"\nИтог за все раунды: ✅%d   ❌%d   ❔%d   (раундов %d)\n",
+				teamInfo.TotalCorrectAnswersCount,
+				teamInfo.TotalIncorrectAnswersCount,
+				teamInfo.TotalSkippedAnswersCount,
+				len(teamInfo.TeamInfo.RoundResults),
+			)
+		}
+	}
+	return result
 }
 
 func (u *User) ClearGame(ctx context.Context) error {

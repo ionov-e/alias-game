@@ -190,15 +190,22 @@ func (d data) wordsFromDictionary() ([]string, error) {
 	return nil, fmt.Errorf("unknown dictionary key: %s", d.RoundDictionaryKey)
 }
 
-func (d data) convertTeamInfo() []TeamInfo {
-	converted := make([]TeamInfo, len(d.AllTeamsInfo))
+type teamInfoWithTotalResults struct {
+	TeamInfo                   teamInfo
+	TotalCorrectAnswersCount   uint16
+	TotalIncorrectAnswersCount uint16
+	TotalSkippedAnswersCount   uint16
+}
 
-	for i, teamInfo := range d.AllTeamsInfo {
-		roundResults := make([]RoundResult, len(teamInfo.RoundResults))
+func (d data) calculateTeamInfoWithTotalResults() []teamInfoWithTotalResults {
+	converted := make([]teamInfoWithTotalResults, len(d.AllTeamsInfo))
+
+	for i, ti := range d.AllTeamsInfo {
+		roundResults := make([]roundResult, len(ti.RoundResults))
 		var totalCorrect, totalIncorrect, totalSkipped uint16
 
-		for j, rr := range teamInfo.RoundResults {
-			roundResults[j] = RoundResult{
+		for j, rr := range ti.RoundResults {
+			roundResults[j] = roundResult{
 				CorrectAnswersCount:   rr.CorrectAnswersCount,
 				IncorrectAnswersCount: rr.IncorrectAnswersCount,
 				SkippedAnswersCount:   rr.SkippedAnswersCount,
@@ -208,9 +215,11 @@ func (d data) convertTeamInfo() []TeamInfo {
 			totalSkipped += rr.SkippedAnswersCount
 		}
 
-		converted[i] = TeamInfo{
-			Name:                       teamInfo.Name,
-			RoundResults:               roundResults,
+		converted[i] = teamInfoWithTotalResults{
+			TeamInfo: teamInfo{
+				Name:         ti.Name,
+				RoundResults: roundResults,
+			},
 			TotalCorrectAnswersCount:   totalCorrect,
 			TotalIncorrectAnswersCount: totalIncorrect,
 			TotalSkippedAnswersCount:   totalSkipped,
