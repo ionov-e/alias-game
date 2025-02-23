@@ -2,6 +2,7 @@ package app
 
 import (
 	"alias-game/internal/helper"
+	"alias-game/internal/helper/telegram_type"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	"context"
@@ -67,7 +68,7 @@ func (a *App) Run(ctx context.Context) error { // TODO no return
 				go func() {
 					defer wg.Done()
 
-					tgUser, text, err := helper.ExtractFromUpdate(tgUpdate)
+					tgUser, text, err := telegram_type.ExtractUserFromUpdate(tgUpdate)
 					if err != nil {
 						log.Printf("failed at extracting from tgUpdate: %+v, error: %v", tgUpdate, err)
 						return
