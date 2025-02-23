@@ -20,10 +20,10 @@ type SetWordCountToWinPredefined struct {
 	user     *user.User
 }
 
-func NewSetWordCountToWinPredefined(tgClient *telegram.Client, user *user.User) SetWordCountToWinPredefined {
+func NewSetWordCountToWinPredefined(tgClient *telegram.Client, u *user.User) SetWordCountToWinPredefined {
 	return SetWordCountToWinPredefined{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -60,12 +60,12 @@ func (m SetWordCountToWinPredefined) setWordCountToWinAndGoToNextMenu(ctx contex
 	return nil
 }
 
-func chooseSetWordCountToWinPredefined(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.SetWordCountToWinPredefined)
+func chooseSetWordCountToWinPredefined(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.SetWordCountToWinPredefined)
 	if err != nil {
 		return fmt.Errorf("failed in chooseSetWordCountToWinPredefined changing current menu: %w", err)
 	}
-	thisMenu := NewSetWordCountToWinPredefined(client, user)
+	thisMenu := NewSetWordCountToWinPredefined(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseSetWordCountToWinPredefined: %w", err)

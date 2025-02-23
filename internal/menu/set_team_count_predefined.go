@@ -20,10 +20,10 @@ type SetTeamCountPredefined struct {
 	user     *user.User
 }
 
-func NewSetTeamCountPredefined(tgClient *telegram.Client, user *user.User) SetTeamCountPredefined {
+func NewSetTeamCountPredefined(tgClient *telegram.Client, u *user.User) SetTeamCountPredefined {
 	return SetTeamCountPredefined{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -65,12 +65,12 @@ func (m SetTeamCountPredefined) SetTeamCountAndChooseNextMenu(ctx context.Contex
 	return nil
 }
 
-func chooseSetTeamCount(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.SetTeamCountPredefined)
+func chooseSetTeamCount(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.SetTeamCountPredefined)
 	if err != nil {
 		return fmt.Errorf("failed in chooseSetTeamCount changing current menu: %w", err)
 	}
-	thisMenu := NewSetTeamCountPredefined(client, user)
+	thisMenu := NewSetTeamCountPredefined(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseSetTeamCount: %w", err)

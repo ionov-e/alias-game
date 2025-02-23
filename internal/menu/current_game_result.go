@@ -2,7 +2,6 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userConstant "alias-game/internal/constant/user"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
@@ -19,10 +18,10 @@ type CurrentGameResult struct {
 	user     *user.User
 }
 
-func NewCurrentGameResult(tgClient *telegram.Client, user *user.User) CurrentGameResult {
+func NewCurrentGameResult(tgClient *telegram.Client, u *user.User) CurrentGameResult {
 	return CurrentGameResult{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -55,12 +54,12 @@ func (m CurrentGameResult) Respond(ctx context.Context, message string) error {
 	}
 }
 
-func chooseCurrentGameResult(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.CurrentGameResult)
+func chooseCurrentGameResult(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.CurrentGameResult)
 	if err != nil {
 		return fmt.Errorf("failed in chooseEndGameResult changing current menu: %w", err)
 	}
-	thisMenu := NewCurrentGameResult(client, user)
+	thisMenu := NewCurrentGameResult(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseEndGameResult: %w", err)
@@ -69,42 +68,14 @@ func chooseCurrentGameResult(ctx context.Context, client *telegram.Client, user 
 }
 
 func (m CurrentGameResult) sendDefaultMessage(ctx context.Context) error {
-	gameResult := m.user.GameResult()
-	result := "Текущие результаты игры:\n" + gameDetails(gameResult)
 	err := m.tgClient.SendOneTimeReplyMarkup(
 		ctx,
 		m.user.TelegramID(),
-		result,
+		m.user.CurrentGameResul(),
 		tgTypes.KeyboardButtonsFromStrings([]string{nextInCurrentGameMessage, startAnewMessage}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed sending message: %w", err)
 	}
 	return nil
-}
-
-func gameDetails(gameResult []userConstant.TeamInfo) string {
-	var result string
-	for _, teamInfo := range gameResult {
-		result += fmt.Sprintf("\nКоманда %s:\n", teamInfo.Name)
-
-		if len(teamInfo.RoundResults) == 0 {
-			result += "\nЕще не было раундов\n"
-		}
-
-		for i, roundResult := range teamInfo.RoundResults {
-			result += fmt.Sprintf("Раунд %d)  ✅%d   ❌%d   ❔%d\n", i+1, roundResult.CorrectAnswersCount, roundResult.IncorrectAnswersCount, roundResult.SkippedAnswersCount)
-		}
-
-		if len(teamInfo.RoundResults) > 1 {
-			result += fmt.Sprintf(
-				"\nИтог за все раунды: ✅%d   ❌%d   ❔%d   (раундов %d)\n",
-				teamInfo.TotalCorrectAnswersCount,
-				teamInfo.TotalIncorrectAnswersCount,
-				teamInfo.TotalSkippedAnswersCount,
-				len(teamInfo.RoundResults),
-			)
-		}
-	}
-	return result
 }

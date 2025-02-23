@@ -2,7 +2,6 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userConstant "alias-game/internal/constant/user"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
@@ -18,10 +17,10 @@ type EndGameResult struct {
 	user     *user.User
 }
 
-func NewEndGameResult(tgClient *telegram.Client, user *user.User) EndGameResult {
+func NewEndGameResult(tgClient *telegram.Client, u *user.User) EndGameResult {
 	return EndGameResult{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -48,35 +47,25 @@ func (m EndGameResult) Respond(ctx context.Context, message string) error {
 	}
 }
 
-func chooseEndGameResult(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.EndGameResult)
+func chooseEndGameResult(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.EndGameResult)
 	if err != nil {
 		return fmt.Errorf("failed in chooseEndGameResult changing current menu: %w", err)
 	}
-	thisMenu := NewEndGameResult(client, user)
+	thisMenu := NewEndGameResult(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseEndGameResult: %w", err)
 	}
-	user.ClearGame(ctx)
+	err = u.ClearGame(ctx)
+	if err != nil {
+		return fmt.Errorf("failed clearing game: %w", err)
+	}
 	return nil
 }
 
 func (m EndGameResult) sendDefaultMessage(ctx context.Context) error {
-	gameResult := m.user.GameResult()
-	winners := findWinners(gameResult)
-
-	var result string
-	if len(winners) == 1 {
-		result = fmt.Sprintf("Победитель: 🏆 %s\n", winners[0].Name)
-	} else {
-		result = "Победу делят команды:\n"
-		for _, winner := range winners {
-			result += fmt.Sprintf("🏆 %s\n", winner.Name)
-		}
-	}
-
-	result += "\n\nРезультаты:\n\n" + gameDetails(gameResult)
+	result := m.user.EndGameResult()
 	err := m.tgClient.SendOneTimeReplyMarkup(
 		ctx,
 		m.user.TelegramID(),
@@ -87,20 +76,4 @@ func (m EndGameResult) sendDefaultMessage(ctx context.Context) error {
 		return fmt.Errorf("failed sending message: %w", err)
 	}
 	return nil
-}
-
-func findWinners(teams []userConstant.TeamInfo) []userConstant.TeamInfo {
-	var winners []userConstant.TeamInfo
-	var maxCorrect uint16
-
-	for _, team := range teams {
-		if team.TotalCorrectAnswersCount > maxCorrect {
-			winners = []userConstant.TeamInfo{team}
-			maxCorrect = team.TotalCorrectAnswersCount
-		} else if team.TotalCorrectAnswersCount == maxCorrect { // Tie
-			winners = append(winners, team)
-		}
-	}
-
-	return winners
 }

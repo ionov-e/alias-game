@@ -17,10 +17,10 @@ type Start0 struct {
 	user     *user.User
 }
 
-func NewStart0(tgClient *telegram.Client, user *user.User) Start0 {
+func NewStart0(tgClient *telegram.Client, u *user.User) Start0 {
 	return Start0{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -47,12 +47,12 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 	}
 }
 
-func chooseNewStart0(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.Start0)
+func chooseNewStart0(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.Start0)
 	if err != nil {
 		return fmt.Errorf("failed in chooseNewStart0 changing current menu: %w", err)
 	}
-	thisMenu := NewStart0(client, user)
+	thisMenu := NewStart0(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseNewStart0: %w", err)

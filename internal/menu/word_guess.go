@@ -2,7 +2,6 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userConstant "alias-game/internal/constant/user"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
@@ -20,19 +19,19 @@ const rightMessage = "Верно"
 const nextInWordGuessMessage = "Следующее"
 const endRoundMessage = "Закончить раунд"
 
-func NewWordGuess(tgClient *telegram.Client, user *user.User) WordGuess {
+func NewWordGuess(tgClient *telegram.Client, u *user.User) WordGuess {
 	return WordGuess{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
 func (w WordGuess) Respond(ctx context.Context, message string) error {
 	switch message {
 	case rightMessage:
-		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Correct)
+		return w.saveWordResultAndGoToNextWord(ctx, user.Correct)
 	case nextInWordGuessMessage:
-		return w.saveWordResultAndGoToNextWord(ctx, userConstant.Skipped)
+		return w.saveWordResultAndGoToNextWord(ctx, user.Skipped)
 	case endRoundMessage:
 		// TODO stop timer
 		err := chooseRoundResult(ctx, w.tgClient, w.user)
@@ -75,12 +74,12 @@ func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
 	return nil
 }
 
-func chooseWordGuess(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.Word)
+func chooseWordGuess(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.Word)
 	if err != nil {
 		return fmt.Errorf("failed in chooseWordGuess changing menu: %w", err)
 	}
-	thisMenu := NewWordGuess(client, user)
+	thisMenu := NewWordGuess(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sendDefaultMessage in chooseWordGuess): %w", err)
@@ -96,7 +95,7 @@ func (w WordGuess) options() []string {
 	}
 }
 
-func (w WordGuess) saveWordResultAndGoToNextWord(ctx context.Context, result userConstant.WordResult) error {
+func (w WordGuess) saveWordResultAndGoToNextWord(ctx context.Context, result user.WordResult) error {
 	w.user.SetCurrentWordResult(result)
 	w.user.NextWord()
 	err := chooseWordGuess(ctx, w.tgClient, w.user)

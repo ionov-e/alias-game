@@ -1,7 +1,6 @@
 package user
 
 import (
-	userConstant "alias-game/internal/constant/user"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -22,20 +21,20 @@ type data struct {
 	// In seconds
 	PreferenceRoundTime uint16 `json:"prt"` //nolint:tagliatelle
 	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32                    `json:"ppc"`          //nolint:tagliatelle
-	PreferenceWordDifficulty uint8                      `json:"pwd"`          //nolint:tagliatelle
-	DictionaryHistory        []dictionaryCount          `json:"dc,omitempty"` //nolint:tagliatelle
-	RoundStartTime           time.Time                  `json:"rst"`          //nolint:tagliatelle
-	RoundEndTime             time.Time                  `json:"ret"`          //nolint:tagliatelle
-	RoundDictionaryKey       userConstant.DictionaryKey `json:"rdk"`          //nolint:tagliatelle
+	PreferencePenaltyCost    float32           `json:"ppc"`          //nolint:tagliatelle
+	PreferenceWordDifficulty uint8             `json:"pwd"`          //nolint:tagliatelle
+	DictionaryHistory        []dictionaryCount `json:"dc,omitempty"` //nolint:tagliatelle
+	RoundStartTime           time.Time         `json:"rst"`          //nolint:tagliatelle
+	RoundEndTime             time.Time         `json:"ret"`          //nolint:tagliatelle
+	RoundDictionaryKey       DictionaryKey     `json:"rdk"`          //nolint:tagliatelle
 	// Starts with 0 (index in RoundWords slice)
 	RoundWordNumber uint16 `json:"rwn"` //nolint:tagliatelle
 	// Starts with 0 (index in AllTeamsInfo slice)
-	RoundTeamNumber  uint16                    `json:"rtn"`           //nolint:tagliatelle
-	RoundWords       []string                  `json:"rw,omitempty"`  //nolint:tagliatelle
-	RoundWordResults []userConstant.WordResult `json:"rwr,omitempty"` //nolint:tagliatelle
-	WordCountToWin   uint16                    `json:"wctw"`          //nolint:tagliatelle
-	AllTeamsInfo     []teamInfo                `json:"ati,omitempty"` //nolint:tagliatelle
+	RoundTeamNumber  uint16       `json:"rtn"`           //nolint:tagliatelle
+	RoundWords       []string     `json:"rw,omitempty"`  //nolint:tagliatelle
+	RoundWordResults []WordResult `json:"rwr,omitempty"` //nolint:tagliatelle
+	WordCountToWin   uint16       `json:"wctw"`          //nolint:tagliatelle
+	AllTeamsInfo     []teamInfo   `json:"ati,omitempty"` //nolint:tagliatelle
 }
 
 type teamInfo struct {
@@ -50,8 +49,8 @@ type roundResult struct {
 }
 
 type dictionaryCount struct {
-	DictionaryKey userConstant.DictionaryKey `json:"d"` //nolint:tagliatelle
-	Count         uint16                     `json:"c"` //nolint:tagliatelle
+	DictionaryKey DictionaryKey `json:"d"` //nolint:tagliatelle
+	Count         uint16        `json:"c"` //nolint:tagliatelle
 }
 
 func (d *data) word(wordNumber uint16) (string, error) {
@@ -61,11 +60,11 @@ func (d *data) word(wordNumber uint16) (string, error) {
 	return d.RoundWords[wordNumber], nil
 }
 
-func (d *data) setRoundWordResult(wordNumber uint16, wordResult userConstant.WordResult) {
+func (d *data) setRoundWordResult(wordNumber uint16, wordResult WordResult) {
 	d.addLastRequest()
 
 	if d.RoundWordResults == nil {
-		d.RoundWordResults = []userConstant.WordResult{}
+		d.RoundWordResults = []WordResult{}
 	}
 
 	if int(wordNumber) >= len(d.RoundWordResults) {
@@ -147,7 +146,7 @@ func (d *data) addLastRequest() {
 	d.LastRequestTime = time.Now()
 }
 
-func (d *data) chooseAnotherDictionary(dictionaryKey userConstant.DictionaryKey) {
+func (d *data) chooseAnotherDictionary(dictionaryKey DictionaryKey) {
 	d.RoundDictionaryKey = dictionaryKey
 
 	if d.DictionaryHistory == nil {
@@ -178,28 +177,28 @@ func (d *data) prepareRoundWordsFromDictionary() error {
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec // We shouldn't bother
 	r.Shuffle(len(wordsFromDict), func(i, j int) { wordsFromDict[i], wordsFromDict[j] = wordsFromDict[j], wordsFromDict[i] })
 	d.RoundWords = wordsFromDict
-	d.RoundWordResults = []userConstant.WordResult{}
+	d.RoundWordResults = []WordResult{}
 	d.RoundWordNumber = 0
 	return nil
 }
 
 func (d data) wordsFromDictionary() ([]string, error) {
-	if d.RoundDictionaryKey == userConstant.Easy1 {
+	if d.RoundDictionaryKey == Easy1 {
 		return ease1List(), nil
 	}
 
 	return nil, fmt.Errorf("unknown dictionary key: %s", d.RoundDictionaryKey)
 }
 
-func (d data) convertTeamInfo() []userConstant.TeamInfo {
-	converted := make([]userConstant.TeamInfo, len(d.AllTeamsInfo))
+func (d data) convertTeamInfo() []TeamInfo {
+	converted := make([]TeamInfo, len(d.AllTeamsInfo))
 
 	for i, teamInfo := range d.AllTeamsInfo {
-		roundResults := make([]userConstant.RoundResult, len(teamInfo.RoundResults))
+		roundResults := make([]RoundResult, len(teamInfo.RoundResults))
 		var totalCorrect, totalIncorrect, totalSkipped uint16
 
 		for j, rr := range teamInfo.RoundResults {
-			roundResults[j] = userConstant.RoundResult{
+			roundResults[j] = RoundResult{
 				CorrectAnswersCount:   rr.CorrectAnswersCount,
 				IncorrectAnswersCount: rr.IncorrectAnswersCount,
 				SkippedAnswersCount:   rr.SkippedAnswersCount,
@@ -209,7 +208,7 @@ func (d data) convertTeamInfo() []userConstant.TeamInfo {
 			totalSkipped += rr.SkippedAnswersCount
 		}
 
-		converted[i] = userConstant.TeamInfo{
+		converted[i] = TeamInfo{
 			Name:                       teamInfo.Name,
 			RoundResults:               roundResults,
 			TotalCorrectAnswersCount:   totalCorrect,
@@ -238,7 +237,7 @@ func (d *data) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal data failed: %w", err)
 	}
 	if d.RoundWordResults == nil {
-		d.RoundWordResults = []userConstant.WordResult{}
+		d.RoundWordResults = []WordResult{}
 	}
 	if d.RoundWords == nil {
 		d.RoundWords = []string{}

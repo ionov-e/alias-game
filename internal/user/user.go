@@ -2,7 +2,6 @@ package user
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userConstant "alias-game/internal/constant/user"
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"errors"
@@ -58,7 +57,7 @@ func (u *User) CurrentWord() (string, error) {
 	return word, nil
 }
 
-func (u *User) SetCurrentWordResult(result userConstant.WordResult) {
+func (u *User) SetCurrentWordResult(result WordResult) {
 	u.data.setRoundWordResult(u.data.RoundWordNumber, result)
 }
 
@@ -72,13 +71,13 @@ func (u *User) ConcludeRound(ctx context.Context) (roundResults string, err erro
 	for number, wordResult := range u.data.RoundWordResults {
 		msg += fmt.Sprintf("%d) %s %s\n", number+1, wordResult, u.data.RoundWords[number])
 		switch wordResult {
-		case userConstant.Correct:
+		case Correct:
 			correctAnswers++
-		case userConstant.Incorrect:
+		case Incorrect:
 			incorrectAnswers++
-		case userConstant.Skipped:
+		case Skipped:
 			skippedAnswers++
-		case userConstant.NotAnswered:
+		case NotAnswered:
 			continue
 		default:
 			return "", fmt.Errorf("wordResult is %v, in user %d", wordResult, u.data.TelegramID)
@@ -137,7 +136,7 @@ func (u *User) SetRoundTime(ctx context.Context, newRoundTimeInSeconds uint16) e
 	return nil
 }
 
-func (u *User) ChooseDictionary(ctx context.Context, keyForDictionary userConstant.DictionaryKey) error {
+func (u *User) ChooseDictionary(ctx context.Context, keyForDictionary DictionaryKey) error {
 	u.data.addLastRequest()
 	u.data.chooseAnotherDictionary(keyForDictionary)
 
@@ -197,20 +196,82 @@ func (u *User) SetWordCountToWin(wordCountToWin uint16) {
 	u.data.WordCountToWin = wordCountToWin
 }
 
-func (u *User) LastRoundResult() (words []string, results []userConstant.WordResult) {
+func (u *User) LastRoundResult() (words []string, results []WordResult) {
 	u.data.addLastRequest()
 	return u.data.RoundWords, u.data.RoundWordResults
 }
 
-func (u *User) GameResult() []userConstant.TeamInfo {
+func (u *User) CurrentGameResul() string {
 	u.data.addLastRequest()
-	return u.data.convertTeamInfo()
+	gameResult := u.data.convertTeamInfo()
+	return "Текущие результаты игры:\n" + u.gameDetails(gameResult)
+}
+
+func (u *User) EndGameResult() string {
+	u.data.addLastRequest()
+	gameResult := u.data.convertTeamInfo()
+	winners := u.findWinners(gameResult)
+
+	var result string
+	if len(winners) == 1 {
+		result = fmt.Sprintf("Победитель: 🏆 %s\n", winners[0].Name)
+	} else {
+		result = "Победу делят команды:\n"
+		for _, winner := range winners {
+			result += fmt.Sprintf("🏆 %s\n", winner.Name)
+		}
+	}
+
+	result += "\n\nРезультаты:\n\n" + u.gameDetails(gameResult)
+	return result
+}
+
+func (u *User) gameDetails(gameResult []TeamInfo) string {
+	var result string
+	for _, teamInfo := range gameResult {
+		result += fmt.Sprintf("\nКоманда %s:\n", teamInfo.Name)
+
+		if len(teamInfo.RoundResults) == 0 {
+			result += "\nЕще не было раундов\n"
+		}
+
+		for i, roundResult := range teamInfo.RoundResults {
+			result += fmt.Sprintf("Раунд %d)  ✅%d   ❌%d   ❔%d\n", i+1, roundResult.CorrectAnswersCount, roundResult.IncorrectAnswersCount, roundResult.SkippedAnswersCount)
+		}
+
+		if len(teamInfo.RoundResults) > 1 {
+			result += fmt.Sprintf(
+				"\nИтог за все раунды: ✅%d   ❌%d   ❔%d   (раундов %d)\n",
+				teamInfo.TotalCorrectAnswersCount,
+				teamInfo.TotalIncorrectAnswersCount,
+				teamInfo.TotalSkippedAnswersCount,
+				len(teamInfo.RoundResults),
+			)
+		}
+	}
+	return result
+}
+
+func (u *User) findWinners(teams []TeamInfo) []TeamInfo {
+	var winners []TeamInfo
+	var maxCorrect uint16
+
+	for _, team := range teams {
+		if team.TotalCorrectAnswersCount > maxCorrect {
+			winners = []TeamInfo{team}
+			maxCorrect = team.TotalCorrectAnswersCount
+		} else if team.TotalCorrectAnswersCount == maxCorrect { // Tie
+			winners = append(winners, team)
+		}
+	}
+
+	return winners
 }
 
 func (u *User) ClearGame(ctx context.Context) error {
 	u.data.addLastRequest()
 	u.data.RoundWords = []string{}
-	u.data.RoundWordResults = []userConstant.WordResult{}
+	u.data.RoundWordResults = []WordResult{}
 	u.data.RoundWordNumber = 0
 	u.data.RoundTeamNumber = 0
 	err := u.db.saveUserInfo(ctx, u.data)

@@ -2,7 +2,6 @@ package menu
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
-	userConstant "alias-game/internal/constant/user"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
 	tgTypes "alias-game/pkg/telegram/types"
@@ -29,7 +28,7 @@ func NewSetDictionary0(tgClient *telegram.Client, u *user.User) SetDictionary0 {
 func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 	switch message {
 	case easy1DictionaryNameMessage:
-		err := m.user.ChooseDictionary(ctx, userConstant.Easy1)
+		err := m.user.ChooseDictionary(ctx, user.Easy1)
 		if err != nil {
 			return fmt.Errorf("failed ChooseDictionary in SetDictionary: %w", err)
 		}

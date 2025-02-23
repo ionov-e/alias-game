@@ -20,10 +20,10 @@ type SetRoundTimePredefined struct {
 	user     *user.User
 }
 
-func NewSetRoundTimePredefined(tgClient *telegram.Client, user *user.User) SetRoundTimePredefined {
+func NewSetRoundTimePredefined(tgClient *telegram.Client, u *user.User) SetRoundTimePredefined {
 	return SetRoundTimePredefined{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -62,12 +62,12 @@ func (m SetRoundTimePredefined) setRoundTimeAndGoToNextMenu(ctx context.Context,
 	return nil
 }
 
-func chooseSetRoundTime(ctx context.Context, client *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.SetRoundTimePredefined)
+func chooseSetRoundTime(ctx context.Context, client *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.SetRoundTimePredefined)
 	if err != nil {
 		return fmt.Errorf("failed in chooseSetRoundTime changing current menu: %w", err)
 	}
-	thisMenu := NewSetRoundTimePredefined(client, user)
+	thisMenu := NewSetRoundTimePredefined(client, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseSetRoundTime: %w", err)

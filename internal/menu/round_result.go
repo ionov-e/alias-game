@@ -22,10 +22,10 @@ type RoundResult struct {
 	user     *user.User
 }
 
-func NewRoundResult(tgClient *telegram.Client, user *user.User) RoundResult {
+func NewRoundResult(tgClient *telegram.Client, u *user.User) RoundResult {
 	return RoundResult{
 		tgClient: tgClient,
-		user:     user,
+		user:     u,
 	}
 }
 
@@ -79,24 +79,24 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 	}
 }
 
-func chooseRoundResult(ctx context.Context, tgClient *telegram.Client, user *user.User) error {
-	err := user.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
+func chooseRoundResult(ctx context.Context, tgClient *telegram.Client, u *user.User) error {
+	err := u.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
 	if err != nil {
 		return fmt.Errorf("failed in chooseRoundResult changing current menu: %w", err)
 	}
-	roundResults, err := user.ConcludeRound(ctx)
+	roundResults, err := u.ConcludeRound(ctx)
 	if err != nil {
-		return fmt.Errorf("failed ConcludeRound for user: %d): %w", user.TelegramID(), err)
+		return fmt.Errorf("failed ConcludeRound for user: %d): %w", u.TelegramID(), err)
 	}
 	err = tgClient.SendTextMessage(
 		ctx,
-		user.TelegramID(),
+		u.TelegramID(),
 		fmt.Sprintf("Результат раунда:\n%s", roundResults),
 	)
 	if err != nil {
 		return fmt.Errorf("failed sending text message: %w", err)
 	}
-	thisMenu := NewRoundResult(tgClient, user)
+	thisMenu := NewRoundResult(tgClient, u)
 	err = thisMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseRoundResult: %w", err)
