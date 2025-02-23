@@ -45,7 +45,7 @@ func (m SetWordCountToWinPredefined) Respond(ctx context.Context, message string
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in SetWordCountToWinPredefined, failed to send message: %w", message, err)
 		}
 		return fmt.Errorf("unexpected answer '%s' in SetWordCountToWinPredefined", message)
 	}
@@ -53,22 +53,14 @@ func (m SetWordCountToWinPredefined) Respond(ctx context.Context, message string
 
 func (m SetWordCountToWinPredefined) setWordCountToWinAndGoToNextMenu(ctx context.Context, wordCountToWin uint16) error {
 	m.user.SetWordCountToWin(wordCountToWin)
-	err := chooseNextRoundSuggestion(ctx, m.tgClient, m.user)
+	err := m.user.ChangeCurrentMenu(ctx, menuConstant.NextRoundSuggestion)
 	if err != nil {
-		return fmt.Errorf("error chooseNextRoundSuggestion: %w", err)
+		return fmt.Errorf("failed in SetWordCountToWinPredefined changing current menu: %w", err)
 	}
-	return nil
-}
-
-func chooseSetWordCountToWinPredefined(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.SetWordCountToWinPredefined)
+	newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+	err = newMenu.sendDefaultMessage(ctx)
 	if err != nil {
-		return fmt.Errorf("failed in chooseSetWordCountToWinPredefined changing current menu: %w", err)
-	}
-	thisMenu := NewSetWordCountToWinPredefined(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseSetWordCountToWinPredefined: %w", err)
+		return fmt.Errorf("failed sending message in SetWordCountToWinPredefined: %w", err)
 	}
 	return nil
 }
@@ -78,18 +70,10 @@ func (m SetWordCountToWinPredefined) sendDefaultMessage(ctx context.Context) err
 		ctx,
 		m.user.TelegramID(),
 		defaultSetWordCountToWinPredefinedMessage,
-		tgTypes.KeyboardButtonsFromStrings(m.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{oneHundredChoiceMessage, twoHundredChoiceMessage, threeHundredChoiceMessage}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed sending message: %w", err)
 	}
 	return nil
-}
-
-func (m SetWordCountToWinPredefined) options() []string {
-	return []string{
-		oneHundredChoiceMessage,
-		twoHundredChoiceMessage,
-		threeHundredChoiceMessage,
-	}
 }

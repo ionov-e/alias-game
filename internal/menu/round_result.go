@@ -51,57 +51,47 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 
 	switch message {
 	case nextWord2Message:
-		err := chooseNextRoundSuggestion(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.NextRoundSuggestion)
 		if err != nil {
-			return fmt.Errorf("error chooseNextRoundSuggestion: %w", err)
+			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
+		}
+		newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in RoundResult: %w", err)
 		}
 		return nil
 	case currentGameResultsMessage:
-		err := chooseCurrentGameResult(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.CurrentGameResult)
 		if err != nil {
-			return fmt.Errorf("error chooseCurrentGameResult: %w", err)
+			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
+		}
+		newMenu := NewCurrentGameResult(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in RoundResult: %w", err)
 		}
 		return nil
 	case endGameResultsMessage:
 		err := chooseEndGameResult(ctx, m.tgClient, m.user)
 		if err != nil {
-			return fmt.Errorf("error chooseEndGameResult: %w", err)
+			return fmt.Errorf("error RoundResult: %w", err)
 		}
 		return nil
 	case startAgainMessage:
-		err := chooseNewStart0(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.Start0)
 		if err != nil {
-			return fmt.Errorf("error chooseNewStart0: %w", err)
+			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
+		}
+		newMenu := NewStart0(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in RoundResult: %w", err)
 		}
 		return nil
 	default:
 		return fmt.Errorf("inner logic error: unexpected answer '%s' in RoundResult respond", message)
 	}
-}
-
-func chooseRoundResult(ctx context.Context, tgClient *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
-	if err != nil {
-		return fmt.Errorf("failed in chooseRoundResult changing current menu: %w", err)
-	}
-	roundResults, err := u.ConcludeRound(ctx)
-	if err != nil {
-		return fmt.Errorf("failed ConcludeRound for user: %d): %w", u.TelegramID(), err)
-	}
-	err = tgClient.SendTextMessage(
-		ctx,
-		u.TelegramID(),
-		fmt.Sprintf("Результат раунда:\n%s", roundResults),
-	)
-	if err != nil {
-		return fmt.Errorf("failed sending text message: %w", err)
-	}
-	thisMenu := NewRoundResult(tgClient, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseRoundResult: %w", err)
-	}
-	return nil
 }
 
 func (m RoundResult) sendDefaultMessage(ctx context.Context) error {
@@ -124,8 +114,8 @@ func (m RoundResult) sendDefaultMessage(ctx context.Context) error {
 
 func (m RoundResult) options() ([]string, error) {
 	if m.user.AllTeamsCount() == 1 {
-		return m.optionsForOneTeam(), nil
-	}
+		return []string{startAgainMessage}, nil
+	} // One Team
 
 	isGameEnded, err := m.user.IsGameEnded()
 	if err != nil {
@@ -133,19 +123,7 @@ func (m RoundResult) options() ([]string, error) {
 	}
 
 	if isGameEnded {
-		return m.optionsForMultipleTeamsGameEnded(), nil
+		return []string{endGameResultsMessage}, nil // Multiple Teams: Game Ended
 	}
-	return m.optionsForMultipleTeamsGameNotEnded(), nil
-}
-
-func (m RoundResult) optionsForOneTeam() []string {
-	return []string{startAgainMessage}
-}
-
-func (m RoundResult) optionsForMultipleTeamsGameEnded() []string {
-	return []string{endGameResultsMessage, startAgainMessage}
-}
-
-func (m RoundResult) optionsForMultipleTeamsGameNotEnded() []string {
-	return []string{nextWord2Message, currentGameResultsMessage, startAgainMessage}
+	return []string{nextWord2Message, currentGameResultsMessage, startAgainMessage}, nil // Multiple Teams: Game Not Ended
 }

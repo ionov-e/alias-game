@@ -27,37 +27,29 @@ func NewNextRoundSuggestion(tgClient *telegram.Client, u *user.User) NextRoundSu
 func (m NextRoundSuggestion) Respond(ctx context.Context, message string) error {
 	switch message {
 	case nextRoundMessage:
-		err := chooseWordGuess(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.Word)
 		if err != nil {
-			return fmt.Errorf("error chooseWordGuess: %w", err)
+			return fmt.Errorf("failed in NextRoundSuggestion changing menu: %w", err)
+		}
+		newMenu := NewWordGuess(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sendDefaultMessage in NextRoundSuggestion): %w", err)
 		}
 		return nil
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
+		log.Printf("%s for user: %d in NextRoundSuggestion", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in NextRoundSuggestion: %w", message, err)
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in Start0", message)
+		return fmt.Errorf("unexpected answer '%s' in NextRoundSuggestion", message)
 	}
-}
-
-func chooseNextRoundSuggestion(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.NextRoundSuggestion)
-	if err != nil {
-		return fmt.Errorf("failed in chooseNextRoundSuggestion changing current menu: %w", err)
-	}
-	thisMenu := NewNextRoundSuggestion(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseNextRoundSuggestion: %w", err)
-	}
-	return nil
 }
 
 func (m NextRoundSuggestion) sendDefaultMessage(ctx context.Context) error {
@@ -72,16 +64,10 @@ func (m NextRoundSuggestion) sendDefaultMessage(ctx context.Context) error {
 		ctx,
 		m.user.TelegramID(),
 		msg,
-		tgTypes.KeyboardButtonsFromStrings(m.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{nextRoundMessage}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed sending message: %w", err)
 	}
 	return nil
-}
-
-func (m NextRoundSuggestion) options() []string {
-	return []string{
-		nextRoundMessage,
-	}
 }

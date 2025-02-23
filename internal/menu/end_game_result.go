@@ -27,23 +27,28 @@ func NewEndGameResult(tgClient *telegram.Client, u *user.User) EndGameResult {
 func (m EndGameResult) Respond(ctx context.Context, message string) error {
 	switch message {
 	case startNewGameMessage:
-		err := chooseNewStart0(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.Start0)
 		if err != nil {
-			return fmt.Errorf("error chooseNewStart0: %w", err)
+			return fmt.Errorf("failed in EndGameResult changing current menu: %w", err)
+		}
+		newMenu := NewStart0(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in EndGameResult: %w", err)
 		}
 		return nil
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
+		log.Printf("%s for user: %d in EndGameResult", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in EndGameResult: %w", message, err)
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in EndGameResult, failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in Start0", message)
+		return fmt.Errorf("unexpected answer '%s' in EndGameResult", message)
 	}
 }
 
@@ -52,8 +57,8 @@ func chooseEndGameResult(ctx context.Context, client *telegram.Client, u *user.U
 	if err != nil {
 		return fmt.Errorf("failed in chooseEndGameResult changing current menu: %w", err)
 	}
-	thisMenu := NewEndGameResult(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
+	newMenu := NewEndGameResult(client, u)
+	err = newMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseEndGameResult: %w", err)
 	}

@@ -31,36 +31,46 @@ func (m SetTeamCountPredefined) Respond(ctx context.Context, message string) err
 	switch message {
 	case oneTeamMessage:
 		m.user.SetTeamCount(1)
-		err := chooseNextRoundSuggestion(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.NextRoundSuggestion)
 		if err != nil {
-			return fmt.Errorf("error chooseNextRoundSuggestion in SetTeamCountAndChooseNextMenu: %w", err)
+			return fmt.Errorf("failed in SetTeamCountPredefined changing current menu: %w", err)
+		}
+		newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in SetTeamCountPredefined: %w", err)
 		}
 		return nil
 	case twoTeamsMessage:
-		return m.SetTeamCountAndChooseNextMenu(ctx, 2)
+		return m.setTeamCountAndChooseNextMenu(ctx, 2)
 	case threeTeamsMessage:
-		return m.SetTeamCountAndChooseNextMenu(ctx, 3)
+		return m.setTeamCountAndChooseNextMenu(ctx, 3)
 	//TODO suggest Manual input
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
+		log.Printf("%s for user: %d in SetTeamCountPredefined", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in SetTeamCountPredefined: %w", message, err)
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in SetTeamCountPredefined, failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in Start0", message)
+		return fmt.Errorf("unexpected answer '%s' in StaSetTeamCountPredefinedrt0", message)
 	}
 }
 
-func (m SetTeamCountPredefined) SetTeamCountAndChooseNextMenu(ctx context.Context, teamCount uint16) error {
+func (m SetTeamCountPredefined) setTeamCountAndChooseNextMenu(ctx context.Context, teamCount uint16) error {
 	m.user.SetTeamCount(teamCount)
-	err := chooseSetTeamName(ctx, m.tgClient, m.user)
+	err := m.user.ChangeCurrentMenu(ctx, menuConstant.SetTeamName)
 	if err != nil {
-		return fmt.Errorf("error chooseSetTeamName in SetTeamCountAndChooseNextMenu: %w", err)
+		return fmt.Errorf("failed in chooseSetTeamNameChoice changing current menu: %w", err)
+	}
+	newMenu := NewSetTeamName(m.tgClient, m.user)
+	err = newMenu.sendDefaultMessage(ctx)
+	if err != nil {
+		return fmt.Errorf("failed sending message in chooseSetTeamNameChoice: %w", err)
 	}
 	return nil
 }
@@ -70,8 +80,8 @@ func chooseSetTeamCount(ctx context.Context, client *telegram.Client, u *user.Us
 	if err != nil {
 		return fmt.Errorf("failed in chooseSetTeamCount changing current menu: %w", err)
 	}
-	thisMenu := NewSetTeamCountPredefined(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
+	newMenu := NewSetTeamCountPredefined(client, u)
+	err = newMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseSetTeamCount: %w", err)
 	}
@@ -83,18 +93,10 @@ func (m SetTeamCountPredefined) sendDefaultMessage(ctx context.Context) error {
 		ctx,
 		m.user.TelegramID(),
 		defaultSetTeamCountMessage,
-		tgTypes.KeyboardButtonsFromStrings(m.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{oneTeamMessage, twoTeamsMessage, threeTeamsMessage}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed sending message: %w", err)
 	}
 	return nil
-}
-
-func (m SetTeamCountPredefined) options() []string {
-	return []string{
-		oneTeamMessage,
-		twoTeamsMessage,
-		threeTeamsMessage,
-	}
 }

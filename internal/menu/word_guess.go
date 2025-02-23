@@ -34,17 +34,34 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 		return w.saveWordResultAndGoToNextWord(ctx, user.Skipped)
 	case endRoundMessage:
 		// TODO stop timer
-		err := chooseRoundResult(ctx, w.tgClient, w.user)
+		err := w.user.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
 		if err != nil {
-			return fmt.Errorf("failed chooseRoundResult for user: %d): %w", w.user.TelegramID(), err)
+			return fmt.Errorf("failed in WordGuess changing current menu: %w", err)
+		}
+		roundResults, err := w.user.ConcludeRound(ctx)
+		if err != nil {
+			return fmt.Errorf("failed ConcludeRound for user: %d): %w", w.user.TelegramID(), err)
+		}
+		err = w.tgClient.SendTextMessage(
+			ctx,
+			w.user.TelegramID(),
+			fmt.Sprintf("Результат раунда:\n%s", roundResults),
+		)
+		if err != nil {
+			return fmt.Errorf("failed sending text message: %w", err)
+		}
+		newMenu := NewRoundResult(w.tgClient, w.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in WordGuess: %w", err)
 		}
 		return nil
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in Start0", errMessage, w.user.TelegramID())
+		log.Printf("%s for user: %d in WordGuess", errMessage, w.user.TelegramID())
 		err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in WordGuess: %w", message, err)
 		}
 		err = w.sendDefaultMessage(ctx)
 		if err != nil {
@@ -65,42 +82,26 @@ func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
 		ctx,
 		w.user.TelegramID(),
 		word,
-		tgTypes.KeyboardButtonsFromStrings(w.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{rightMessage, nextInWordGuessMessage, endRoundMessage}),
 	)
 	if err != nil {
-		return fmt.Errorf("failed SendOneTimeReplyMarkup to user: %d, message %s): %w", w.user.TelegramID(), word, err)
+		return fmt.Errorf("failed in WordGuess SendOneTimeReplyMarkup to user: %d, message %s): %w", w.user.TelegramID(), word, err)
 	}
 
 	return nil
-}
-
-func chooseWordGuess(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.Word)
-	if err != nil {
-		return fmt.Errorf("failed in chooseWordGuess changing menu: %w", err)
-	}
-	thisMenu := NewWordGuess(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sendDefaultMessage in chooseWordGuess): %w", err)
-	}
-	return nil
-}
-
-func (w WordGuess) options() []string {
-	return []string{
-		rightMessage,
-		nextInWordGuessMessage,
-		endRoundMessage,
-	}
 }
 
 func (w WordGuess) saveWordResultAndGoToNextWord(ctx context.Context, result user.WordResult) error {
 	w.user.SetCurrentWordResult(result)
 	w.user.NextWord()
-	err := chooseWordGuess(ctx, w.tgClient, w.user)
+	err := w.user.ChangeCurrentMenu(ctx, menuConstant.Word)
 	if err != nil {
-		return fmt.Errorf("failed chooseWordGuess for user: %d): %w", w.user.TelegramID(), err)
+		return fmt.Errorf("failed in chooseWordGuess changing menu: %w", err)
+	}
+	newMenu := NewWordGuess(w.tgClient, w.user)
+	err = newMenu.sendDefaultMessage(ctx)
+	if err != nil {
+		return fmt.Errorf("failed sendDefaultMessage in chooseWordGuess): %w", err)
 	}
 	return nil
 }

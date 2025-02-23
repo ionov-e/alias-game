@@ -37,16 +37,16 @@ func (m SetRoundTimePredefined) Respond(ctx context.Context, message string) err
 		return m.setRoundTimeAndGoToNextMenu(ctx, 3*60, message)
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
+		log.Printf("%s for user: %d in SetRoundTimePredefined", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in SetRoundTimePredefined: %w", message, err)
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in SetRoundTimePredefined, failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in Start0", message)
+		return fmt.Errorf("unexpected answer '%s' in SetRoundTimePredefined", message)
 	}
 }
 
@@ -55,22 +55,14 @@ func (m SetRoundTimePredefined) setRoundTimeAndGoToNextMenu(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("error chooseDictionaryChoice0 (for message %s): %w", message, err)
 	}
-	err = chooseDictionaryChoice0(ctx, m.tgClient, m.user)
+	err = m.user.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
 	if err != nil {
-		return fmt.Errorf("error chooseDictionaryChoice0: %w", err)
+		return fmt.Errorf("failed in chooseDictionaryChoice0 changing current menu: %w", err)
 	}
-	return nil
-}
-
-func chooseSetRoundTime(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.SetRoundTimePredefined)
+	newMenu := NewSetDictionary0(m.tgClient, m.user)
+	err = newMenu.sendDefaultMessage(ctx)
 	if err != nil {
-		return fmt.Errorf("failed in chooseSetRoundTime changing current menu: %w", err)
-	}
-	thisMenu := NewSetRoundTimePredefined(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseSetRoundTime: %w", err)
+		return fmt.Errorf("failed sending message in chooseDictionaryChoice0: %w", err)
 	}
 	return nil
 }
@@ -80,18 +72,10 @@ func (m SetRoundTimePredefined) sendDefaultMessage(ctx context.Context) error {
 		ctx,
 		m.user.TelegramID(),
 		defaultSetRoundTimeMessage,
-		tgTypes.KeyboardButtonsFromStrings(m.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{oneMinuteChoiceMessage, twoMinutesChoiceMessage, threeMinutesChoiceMessage}),
 	)
 	if err != nil {
-		return fmt.Errorf("failed sending message: %w", err)
+		return fmt.Errorf("failed sending message in SetRoundTimePredefined: %w", err)
 	}
 	return nil
-}
-
-func (m SetRoundTimePredefined) options() []string {
-	return []string{
-		oneMinuteChoiceMessage,
-		twoMinutesChoiceMessage,
-		threeMinutesChoiceMessage,
-	}
 }

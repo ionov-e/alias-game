@@ -28,15 +28,25 @@ func NewCurrentGameResult(tgClient *telegram.Client, u *user.User) CurrentGameRe
 func (m CurrentGameResult) Respond(ctx context.Context, message string) error {
 	switch message {
 	case nextInCurrentGameMessage:
-		err := chooseNextRoundSuggestion(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.NextRoundSuggestion)
 		if err != nil {
-			return fmt.Errorf("error chooseNextRoundSuggestion in CurrentGameResult: %w", err)
+			return fmt.Errorf("failed in CurrentGameResult changing current menu: %w", err)
+		}
+		newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in CurrentGameResult: %w", err)
 		}
 		return nil
 	case startAnewMessage:
-		err := chooseNewStart0(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.Start0)
 		if err != nil {
-			return fmt.Errorf("error chooseNewStart0 in CurrentGameResult: %w", err)
+			return fmt.Errorf("failed in CurrentGameResult changing current menu: %w", err)
+		}
+		newMenu := NewStart0(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in CurrentGameResult: %w", err)
 		}
 		return nil
 	default:
@@ -52,19 +62,6 @@ func (m CurrentGameResult) Respond(ctx context.Context, message string) error {
 		}
 		return fmt.Errorf("unexpected answer '%s' in CurrentGameResult", message)
 	}
-}
-
-func chooseCurrentGameResult(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.CurrentGameResult)
-	if err != nil {
-		return fmt.Errorf("failed in chooseEndGameResult changing current menu: %w", err)
-	}
-	thisMenu := NewCurrentGameResult(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseEndGameResult: %w", err)
-	}
-	return nil
 }
 
 func (m CurrentGameResult) sendDefaultMessage(ctx context.Context) error {

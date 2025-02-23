@@ -27,9 +27,14 @@ func NewStart0(tgClient *telegram.Client, u *user.User) Start0 {
 func (m Start0) Respond(ctx context.Context, message string) error {
 	switch message {
 	case startMessage:
-		err := chooseSetRoundTime(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.SetRoundTimePredefined)
 		if err != nil {
-			return fmt.Errorf("error chooseDictionaryChoice0: %w", err)
+			return fmt.Errorf("failed in Start0 changing current menu: %w", err)
+		}
+		newMenu := NewSetRoundTimePredefined(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in Start0: %w", err)
 		}
 		return nil
 	default:
@@ -41,23 +46,10 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in Start0, failed to send message: %w", message, err)
 		}
 		return fmt.Errorf("unexpected answer '%s' in Start0", message)
 	}
-}
-
-func chooseNewStart0(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.Start0)
-	if err != nil {
-		return fmt.Errorf("failed in chooseNewStart0 changing current menu: %w", err)
-	}
-	thisMenu := NewStart0(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseNewStart0: %w", err)
-	}
-	return nil
 }
 
 func (m Start0) sendDefaultMessage(ctx context.Context) error {
@@ -65,16 +57,10 @@ func (m Start0) sendDefaultMessage(ctx context.Context) error {
 		ctx,
 		m.user.TelegramID(),
 		"Начало игры",
-		tgTypes.KeyboardButtonsFromStrings(m.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{startMessage}),
 	)
 	if err != nil {
-		return fmt.Errorf("failed sending message: %w", err)
+		return fmt.Errorf("failed sending message in Start0: %w", err)
 	}
 	return nil
-}
-
-func (m Start0) options() []string {
-	return []string{
-		startMessage,
-	}
 }

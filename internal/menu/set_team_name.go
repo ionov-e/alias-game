@@ -28,7 +28,7 @@ func (m SetTeamName) Respond(ctx context.Context, message string) error {
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in SetTeamName, failed to send message: %w", message, err)
 		}
 		return m.sendDefaultMessage(ctx)
 	}
@@ -40,7 +40,7 @@ func (m SetTeamName) Respond(ctx context.Context, message string) error {
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
+			return fmt.Errorf("unexpected answer '%s' in SetTeamName, failed to send message: %w", message, err)
 		}
 		return m.sendDefaultMessage(ctx)
 	}
@@ -54,9 +54,14 @@ func (m SetTeamName) Respond(ctx context.Context, message string) error {
 		return fmt.Errorf("error in user.SetTeamName: %w", err)
 	}
 	if firstTeamNumberWithoutName+1 == totalTeamCount {
-		err = chooseSetWordCountToWinPredefined(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.SetWordCountToWinPredefined)
 		if err != nil {
-			return fmt.Errorf("error chooseSetWordCountToWinPredefined: %w", err)
+			return fmt.Errorf("failed in SetTeamName changing current menu: %w", err)
+		}
+		newMenu := NewSetWordCountToWinPredefined(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in SetTeamName: %w", err)
 		}
 		return nil
 	}
@@ -67,23 +72,10 @@ func (m SetTeamName) Respond(ctx context.Context, message string) error {
 	return nil
 }
 
-func chooseSetTeamName(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.SetTeamName)
-	if err != nil {
-		return fmt.Errorf("failed in chooseSetTeamNameChoice changing current menu: %w", err)
-	}
-	thisMenu := NewSetTeamName(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseSetTeamNameChoice: %w", err)
-	}
-	return nil
-}
-
 func (m SetTeamName) sendDefaultMessage(ctx context.Context) error {
 	firstTeamNumberWithoutName, _, err := m.user.InfoForFillingTeamNames()
 	if err != nil {
-		return fmt.Errorf("error InfoForFillingTeamNames: %w", err)
+		return fmt.Errorf("error InfoForFillingTeamNames in SetTeamName: %w", err)
 	}
 	err = m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Выбор названия команды (до 20 символов) для команды №%d", firstTeamNumberWithoutName+1))
 	if err != nil {

@@ -30,46 +30,37 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 	case easy1DictionaryNameMessage:
 		err := m.user.ChooseDictionary(ctx, user.Easy1)
 		if err != nil {
-			return fmt.Errorf("failed ChooseDictionary in SetDictionary: %w", err)
+			return fmt.Errorf("failed ChooseDictionary in SetDictionary0: %w", err)
 		}
 		err = chooseSetTeamCount(ctx, m.tgClient, m.user)
 		if err != nil {
-			return fmt.Errorf("failed chooseSetTeamCount respond with %s: %w", message, err)
+			return fmt.Errorf("failed chooseSetTeamCount in SetDictionary0, respond with %s: %w", message, err)
 		}
 		return nil
 	case backMessage:
-		err := chooseNewStart0(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.Start0)
 		if err != nil {
-			return fmt.Errorf("failed SetDictionary respond with %s: %w", message, err)
+			return fmt.Errorf("failed in SetDictionary0 changing current menu: %w", err)
+		}
+		newMenu := NewStart0(m.tgClient, m.user)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in SetDictionary0: %w", err)
 		}
 		return nil
 	default:
 		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in SetDictionary", errMessage, m.user.TelegramID())
+		log.Printf("%s for user: %d in SetDictionary0", errMessage, m.user.TelegramID())
 		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send text message in SetDictionary: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send text message in SetDictionary0: %w", message, err)
 		}
 		err = m.sendDefaultMessage(ctx)
 		if err != nil {
-			return fmt.Errorf("unexpected message '%s', failed to send menu message in SetDictionary: %w", message, err)
+			return fmt.Errorf("unexpected message '%s', failed to send menu message in SetDictionary0: %w", message, err)
 		}
-		return fmt.Errorf("unexpected message '%s' in SetDictionary", message)
+		return fmt.Errorf("unexpected message '%s' in SetDictionary0", message)
 	}
-}
-
-// TODO get rid of these methods
-func chooseDictionaryChoice0(ctx context.Context, client *telegram.Client, u *user.User) error {
-	err := u.ChangeCurrentMenu(ctx, menuConstant.SetDictionary)
-	if err != nil {
-		return fmt.Errorf("failed in chooseDictionaryChoice0 changing current menu: %w", err)
-	}
-	thisMenu := NewSetDictionary0(client, u)
-	err = thisMenu.sendDefaultMessage(ctx)
-	if err != nil {
-		return fmt.Errorf("failed sending message in chooseDictionaryChoice0: %w", err)
-	}
-	return nil
 }
 
 func (m SetDictionary0) sendDefaultMessage(ctx context.Context) error {
@@ -77,18 +68,11 @@ func (m SetDictionary0) sendDefaultMessage(ctx context.Context) error {
 		ctx,
 		m.user.TelegramID(),
 		"Выбери набор слов",
-		tgTypes.KeyboardButtonsFromStrings(m.options()),
+		tgTypes.KeyboardButtonsFromStrings([]string{easy1DictionaryNameMessage, backMessage}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed sending message in SetDictionary: %w", err)
 	}
 
 	return nil
-}
-
-func (m SetDictionary0) options() []string {
-	return []string{
-		easy1DictionaryNameMessage,
-		backMessage,
-	}
 }
