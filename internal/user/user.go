@@ -161,6 +161,7 @@ func (u *User) NextWord() {
 func (u *User) SetTeamCount(count uint16) {
 	u.data.addLastRequest()
 	u.data.AllTeamsInfo = make([]teamInfo, count)
+	u.data.RoundTeamNumber = 0
 }
 
 func (u *User) InfoForFillingTeamNames() (firstTeamNumberWithoutName, totalTeamCount uint16, err error) {
