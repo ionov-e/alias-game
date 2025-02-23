@@ -1,4 +1,4 @@
-package helper
+package menu_factory
 
 import (
 	menuConstant "alias-game/internal/constant/menu"
@@ -13,33 +13,33 @@ type MenuInterface interface {
 	Respond(ctx context.Context, message string) error
 }
 
-func MenuFactory(tgClient *telegram.Client, user *user.User) (MenuInterface, error) {
-	menuKeyString := user.CurrentMenuKey()
+func MenuFactory(tgClient *telegram.Client, u *user.User) (MenuInterface, error) {
+	menuKeyString := u.CurrentMenuKey()
 	menuKey := menuConstant.Key(menuKeyString)
 
 	switch menuKey {
 	case menuConstant.Start0:
-		return menu.NewStart0(tgClient, user), nil
+		return menu.NewStart0(tgClient, u), nil
 	case menuConstant.SetRoundTimePredefined:
-		return menu.NewSetRoundTimePredefined(tgClient, user), nil
+		return menu.NewSetRoundTimePredefined(tgClient, u), nil
 	case menuConstant.SetDictionary:
-		return menu.NewSetDictionary0(tgClient, user), nil
+		return menu.NewSetDictionary0(tgClient, u), nil
 	case menuConstant.SetTeamCountPredefined:
-		return menu.NewSetTeamCountPredefined(tgClient, user), nil
+		return menu.NewSetTeamCountPredefined(tgClient, u), nil
 	case menuConstant.SetTeamName:
-		return menu.NewSetTeamName(tgClient, user), nil
+		return menu.NewSetTeamName(tgClient, u), nil
 	case menuConstant.SetWordCountToWinPredefined:
-		return menu.NewSetWordCountToWinPredefined(tgClient, user), nil
+		return menu.NewSetWordCountToWinPredefined(tgClient, u), nil
 	case menuConstant.NextRoundSuggestion:
-		return menu.NewNextRoundSuggestion(tgClient, user), nil
+		return menu.NewNextRoundSuggestion(tgClient, u), nil
 	case menuConstant.Word:
-		return menu.NewWordGuess(tgClient, user), nil
+		return menu.NewWordGuess(tgClient, u), nil
 	case menuConstant.RoundResult:
-		return menu.NewRoundResult(tgClient, user), nil
+		return menu.NewRoundResult(tgClient, u), nil
 	case menuConstant.CurrentGameResult:
-		return menu.NewCurrentGameResult(tgClient, user), nil
+		return menu.NewCurrentGameResult(tgClient, u), nil
 	case menuConstant.EndGameResult:
-		return menu.NewEndGameResult(tgClient, user), nil
+		return menu.NewEndGameResult(tgClient, u), nil
 	}
 	return nil, fmt.Errorf("menu factory called with: '%s' - no match", menuKeyString)
 }

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"alias-game/internal/helper"
+	"alias-game/internal/helper/menu_factory"
 	"alias-game/internal/helper/telegram_type"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
@@ -80,7 +80,7 @@ func (a *App) Run(ctx context.Context) error { // TODO no return
 						return
 					}
 
-					menu, err := helper.MenuFactory(a.tgClient, u)
+					menu, err := menu_factory.MenuFactory(a.tgClient, u)
 					if err != nil {
 						log.Printf("error getting choice from CallbackQuery.Message.Text: %v", err)
 						return
