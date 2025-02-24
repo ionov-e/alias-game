@@ -6,6 +6,7 @@ import (
 	"fmt"                          //nolint:goimports,goimports
 	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
 	"log"                          //nolint:nolintlint,goimports
+	"time"
 )
 
 const lastUpdateIDKey = "last-update-id"
@@ -34,6 +35,9 @@ func (r *LastUpdateIDRedisClient) LastUpdateID(ctx context.Context) (uint64, err
 }
 
 func (r *LastUpdateIDRedisClient) SaveLastUpdateID(ctx context.Context, lastUpdateID uint64) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel() // Ensure the context is canceled to release resources
+
 	if err := r.client.Set(ctx, lastUpdateIDKey, lastUpdateID, 0).Err(); err != nil {
 		return fmt.Errorf("setting lastUpdateID failed: %w", err)
 	}
