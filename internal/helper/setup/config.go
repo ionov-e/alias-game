@@ -2,7 +2,7 @@ package setup
 
 import (
 	"fmt"
-	"github.com/ilyakaznacheev/cleanenv" //nolint:goimports
+	"github.com/ilyakaznacheev/cleanenv" //nolint:nolintlint,goimports
 	"sync"
 )
 
@@ -11,7 +11,8 @@ type Config struct {
 	Telegram struct {
 		Token string `yaml:"token" env-required:"true"`
 	} `yaml:"telegram"`
-	Redis struct {
+	WorkerPoolSize int `yaml:"worker-pool-size" env-required:"true"`
+	Redis          struct {
 		Address  string `yaml:"address" env-required:"true"`
 		Password string `yaml:"password"`
 		DB       int    `yaml:"db"`

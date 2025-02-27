@@ -6,6 +6,9 @@ telegram:
   # Bot token (required)
   token: ""
 
+# Worker pool configuration
+worker-pool-size: 100
+
 # Redis configuration
 redis:
   # Redis server address (required)

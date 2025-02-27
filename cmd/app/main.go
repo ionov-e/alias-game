@@ -39,7 +39,7 @@ func main() {
 
 	logger.Info("App started")
 
-	process := app.NewApp(tgClient, &dbForLastUpdateID, dbForUser, logger)
+	process := app.NewApp(tgClient, &dbForLastUpdateID, dbForUser, logger, config)
 	process.Run(ctx)
 
 	logger.Info("App stopped")
