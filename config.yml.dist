@@ -1,0 +1,16 @@
+# Debug mode (optional, default: true)
+debug: true
+
+# Telegram bot configuration
+telegram:
+  # Bot token (required)
+  token: ""
+
+# Redis configuration
+redis:
+  # Redis server address (required)
+  address: "localhost:6379"
+  # Redis password (required)
+  password: ""
+  # Redis database number (required)
+  db: 0

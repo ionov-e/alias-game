@@ -13,19 +13,17 @@ import (
 )
 
 func main() {
-	logger := setup.GetLogger(true)
-	//TODO config
-	tgBotToken, err := setup.TelegramBotToken(logger)
+	config, err := setup.GetConfig()
 	if err != nil {
-		logger.Error(err.Error())
-		return
+		panic(err)
 	}
-	tgClient := telegram.NewClient(tgBotToken, logger)
+	logger := setup.GetLogger(config.IsDebug)
+	tgClient := telegram.NewClient(config.Telegram.Token, logger)
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default Redis
+		Addr:     config.Redis.Address,
+		Password: config.Redis.Password,
+		DB:       config.Redis.DB,
 	})
 	defer func() {
 		err := redisClient.Close()
