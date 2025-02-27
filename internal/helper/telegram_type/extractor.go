@@ -12,13 +12,13 @@ func ExtractUserFromUpdate(tgUpdate tgTypes.Update) (*tgTypes.User, string, erro
 	case tgUpdate.Message != nil:
 		return extractUserFromMessage(*tgUpdate.Message)
 	default:
-		return nil, "", fmt.Errorf("unsupported Update type: %+v", tgUpdate)
+		return nil, "", fmt.Errorf("unsupported Update type")
 	}
 }
 
 func extractUserFromMessage(message tgTypes.Message) (*tgTypes.User, string, error) {
 	if message.From == nil {
-		return nil, "", fmt.Errorf("no user in Message.From: %+v", message)
+		return nil, "", fmt.Errorf("no user in Message.From")
 	}
 	return message.From, message.Text, nil
 }
@@ -27,12 +27,12 @@ func extractUserFromCallbackQuery(callbackQuery tgTypes.CallbackQuery) (*tgTypes
 	switch message := callbackQuery.Message.(type) {
 	case tgTypes.Message:
 		if message.Text == "" {
-			return &tgTypes.User{}, "", fmt.Errorf("failed getting CallbackQuery.Message.Text: %+v", callbackQuery)
+			return nil, "", fmt.Errorf("failed getting CallbackQuery.Message.Text")
 		}
 		return &callbackQuery.From, message.Text, nil
 	case tgTypes.InaccessibleMessage:
-		return &tgTypes.User{}, "", fmt.Errorf("InaccessibleMessage in callbackQuery: %+v", callbackQuery)
+		return nil, "", fmt.Errorf("InaccessibleMessage in callbackQuery")
 	default:
-		return &tgTypes.User{}, "", fmt.Errorf("somehow no valid message in callbackQuery: %+v", callbackQuery)
+		return nil, "", fmt.Errorf("somehow no valid message in callbackQuery")
 	}
 }

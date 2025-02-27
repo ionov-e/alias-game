@@ -7,7 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 const defaultSetRoundTimeMessage = "Выбор времени раунда"
@@ -18,12 +18,14 @@ const threeMinutesChoiceMessage = "3 минуты"
 type SetRoundTimePredefined struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
-func NewSetRoundTimePredefined(tgClient *telegram.Client, u *user.User) SetRoundTimePredefined {
+func NewSetRoundTimePredefined(tgClient *telegram.Client, u *user.User, log *slog.Logger) SetRoundTimePredefined {
 	return SetRoundTimePredefined{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -36,9 +38,8 @@ func (m SetRoundTimePredefined) Respond(ctx context.Context, message string) err
 	case threeMinutesChoiceMessage:
 		return m.setRoundTimeAndGoToNextMenu(ctx, 3*60, message)
 	default:
-		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in SetRoundTimePredefined", errMessage, m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		m.log.Debug("unknown command in SetRoundTimePredefined", "message", message, "user_id", m.user.TelegramID())
+		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in SetRoundTimePredefined: %w", message, err)
 		}
@@ -46,7 +47,7 @@ func (m SetRoundTimePredefined) Respond(ctx context.Context, message string) err
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s' in SetRoundTimePredefined, failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in SetRoundTimePredefined", message)
+		return nil
 	}
 }
 
@@ -59,7 +60,7 @@ func (m SetRoundTimePredefined) setRoundTimeAndGoToNextMenu(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("failed in chooseDictionaryChoice0 changing current menu: %w", err)
 	}
-	newMenu := NewSetDictionary0(m.tgClient, m.user)
+	newMenu := NewSetDictionary0(m.tgClient, m.user, m.log)
 	err = newMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in chooseDictionaryChoice0: %w", err)

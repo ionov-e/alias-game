@@ -8,20 +8,22 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
+	"time" //nolint:nolintlint,goimports
 )
 
 type Client struct {
 	token  string
+	log    *slog.Logger
 	client http.Client
 }
 
-func New(token string) *Client {
+func NewClient(token string, log *slog.Logger) *Client {
 	return &Client{
 		token:  token,
+		log:    log,
 		client: http.Client{},
 	}
 }
@@ -75,7 +77,7 @@ func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (ty
 
 	err = json.Unmarshal(responseBytes, &messageResponse)
 	if err != nil {
-		log.Printf("Failed to unmarshal response: %s", string(responseBytes))
+		c.log.Info(fmt.Sprintf("Failed to unmarshal response: %s", string(responseBytes)))
 		return messageResponse, fmt.Errorf("failed to parse response: %w", err)
 	}
 
@@ -109,7 +111,7 @@ func (c *Client) GetUpdates(ctx context.Context, offset uint64, limit int, timeo
 
 	err = json.Unmarshal(responseBytes, &responseObject)
 	if err != nil {
-		log.Println(err)
+		c.log.Info(fmt.Sprintf("failed to parse response: %+v", err))
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 

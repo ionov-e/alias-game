@@ -6,17 +6,20 @@ import (
 	"alias-game/pkg/telegram"
 	"context"
 	"fmt"
+	"log/slog"
 )
 
 type SetTeamName struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
-func NewSetTeamName(tgClient *telegram.Client, u *user.User) SetTeamName {
+func NewSetTeamName(tgClient *telegram.Client, u *user.User, log *slog.Logger) SetTeamName {
 	return SetTeamName{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -58,7 +61,7 @@ func (m SetTeamName) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in SetTeamName changing current menu: %w", err)
 		}
-		newMenu := NewSetWordCountToWinPredefined(m.tgClient, m.user)
+		newMenu := NewSetWordCountToWinPredefined(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in SetTeamName: %w", err)

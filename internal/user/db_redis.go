@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
+	"log/slog"
 	"strconv"
 	"time" //nolint:nolintlint,goimports
 )
@@ -14,10 +15,11 @@ import (
 // RedisClient implements methods needed to persist user data
 type RedisClient struct {
 	client *redis.Client
+	log    *slog.Logger
 }
 
-func NewRedisClient(client *redis.Client) *RedisClient {
-	return &RedisClient{client: client}
+func NewRedisClient(client *redis.Client, log *slog.Logger) *RedisClient {
+	return &RedisClient{client: client, log: log}
 }
 
 func (r *RedisClient) userDataFromTelegramUser(ctx context.Context, u *tgTypes.User) (*data, error) {

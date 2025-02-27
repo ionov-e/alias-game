@@ -7,9 +7,8 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"slices"
-	"strings"
 )
 
 const startAgainMessage = "Начать новую игру"
@@ -20,12 +19,14 @@ const nextWord2Message = "Дальше"
 type RoundResult struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
-func NewRoundResult(tgClient *telegram.Client, u *user.User) RoundResult {
+func NewRoundResult(tgClient *telegram.Client, u *user.User, log *slog.Logger) RoundResult {
 	return RoundResult{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -36,9 +37,13 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 	}
 
 	if !slices.Contains(expectedOptions, message) {
-		errMessage := fmt.Sprintf("Недопустимая комманда: '%s' вместо одной из '%s'", message, strings.Join(expectedOptions, ", "))
-		log.Printf("%s for user: %d in RoundResult", errMessage, m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		m.log.Debug(
+			"unknown command in RoundResult",
+			slog.String("message", message),
+			slog.Any("expected", expectedOptions),
+			slog.Int64("user_id", m.user.TelegramID()),
+		)
+		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in RoundResult: %w", message, err)
 		}
@@ -46,7 +51,7 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in RoundResult", message)
+		return nil
 	}
 
 	switch message {
@@ -55,7 +60,7 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
 		}
-		newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+		newMenu := NewNextRoundSuggestion(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in RoundResult: %w", err)
@@ -66,16 +71,25 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
 		}
-		newMenu := NewCurrentGameResult(m.tgClient, m.user)
+		newMenu := NewCurrentGameResult(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in RoundResult: %w", err)
 		}
 		return nil
 	case endGameResultsMessage:
-		err := chooseEndGameResult(ctx, m.tgClient, m.user)
+		err := m.user.ChangeCurrentMenu(ctx, menuConstant.EndGameResult)
 		if err != nil {
-			return fmt.Errorf("error RoundResult: %w", err)
+			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
+		}
+		newMenu := NewEndGameResult(m.tgClient, m.user, m.log)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in RoundResult: %w", err)
+		}
+		err = m.user.ClearGame(ctx)
+		if err != nil {
+			return fmt.Errorf("failed clearing game: %w", err)
 		}
 		return nil
 	case startAgainMessage:
@@ -83,7 +97,7 @@ func (m RoundResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in RoundResult changing current menu: %w", err)
 		}
-		newMenu := NewStart0(m.tgClient, m.user)
+		newMenu := NewStart0(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in RoundResult: %w", err)

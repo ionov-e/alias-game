@@ -7,21 +7,23 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 type SetDictionary0 struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
 const easy1DictionaryNameMessage = "Легкий словарь"
 const backMessage = "Назад"
 
-func NewSetDictionary0(tgClient *telegram.Client, u *user.User) SetDictionary0 {
+func NewSetDictionary0(tgClient *telegram.Client, u *user.User, log *slog.Logger) SetDictionary0 {
 	return SetDictionary0{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -32,9 +34,14 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed ChooseDictionary in SetDictionary0: %w", err)
 		}
-		err = chooseSetTeamCount(ctx, m.tgClient, m.user)
+		err = m.user.ChangeCurrentMenu(ctx, menuConstant.SetTeamCountPredefined)
 		if err != nil {
-			return fmt.Errorf("failed chooseSetTeamCount in SetDictionary0, respond with %s: %w", message, err)
+			return fmt.Errorf("failed in SetDictionary0 changing current menu: %w", err)
+		}
+		newMenu := NewSetTeamCountPredefined(m.tgClient, m.user, m.log)
+		err = newMenu.sendDefaultMessage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed sending message in SetDictionary0: %w", err)
 		}
 		return nil
 	case backMessage:
@@ -42,16 +49,15 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in SetDictionary0 changing current menu: %w", err)
 		}
-		newMenu := NewStart0(m.tgClient, m.user)
+		newMenu := NewStart0(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in SetDictionary0: %w", err)
 		}
 		return nil
 	default:
-		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in SetDictionary0", errMessage, m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		m.log.Debug("unknown command in SetDictionary0", "message", message, "user_id", m.user.TelegramID())
+		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in SetDictionary0: %w", message, err)
 		}
@@ -59,7 +65,7 @@ func (m SetDictionary0) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send menu message in SetDictionary0: %w", message, err)
 		}
-		return fmt.Errorf("unexpected message '%s' in SetDictionary0", message)
+		return nil
 	}
 }
 

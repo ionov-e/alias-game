@@ -7,7 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 const defaultSetWordCountToWinPredefinedMessage = "Выбор количества слов для победы"
@@ -18,12 +18,14 @@ const threeHundredChoiceMessage = "300"
 type SetWordCountToWinPredefined struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
-func NewSetWordCountToWinPredefined(tgClient *telegram.Client, u *user.User) SetWordCountToWinPredefined {
+func NewSetWordCountToWinPredefined(tgClient *telegram.Client, u *user.User, log *slog.Logger) SetWordCountToWinPredefined {
 	return SetWordCountToWinPredefined{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -37,9 +39,8 @@ func (m SetWordCountToWinPredefined) Respond(ctx context.Context, message string
 		return m.setWordCountToWinAndGoToNextMenu(ctx, 300)
 	//TODO suggest Manual input
 	default:
-		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in SetWordCountToWinPredefined", errMessage, m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		m.log.Debug("unknown command in SetWordCountToWinPredefined", "message", message, "user_id", m.user.TelegramID())
+		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in SetWordCountToWinPredefined: %w", message, err)
 		}
@@ -47,7 +48,7 @@ func (m SetWordCountToWinPredefined) Respond(ctx context.Context, message string
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s' in SetWordCountToWinPredefined, failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in SetWordCountToWinPredefined", message)
+		return nil
 	}
 }
 
@@ -57,7 +58,7 @@ func (m SetWordCountToWinPredefined) setWordCountToWinAndGoToNextMenu(ctx contex
 	if err != nil {
 		return fmt.Errorf("failed in SetWordCountToWinPredefined changing current menu: %w", err)
 	}
-	newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+	newMenu := NewNextRoundSuggestion(m.tgClient, m.user, m.log)
 	err = newMenu.sendDefaultMessage(ctx)
 	if err != nil {
 		return fmt.Errorf("failed sending message in SetWordCountToWinPredefined: %w", err)

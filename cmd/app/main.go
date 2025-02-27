@@ -8,21 +8,19 @@ import (
 	"alias-game/pkg/telegram"
 	"context"
 	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
-	"log"
 	"os/signal"
 	"syscall" //nolint:nolintlint,goimports
 )
 
 func main() {
-	if err := setup.Logging(); err != nil {
-		log.Fatal(err)
-	}
+	logger := setup.GetLogger(true)
 	//TODO config
-	tgBotToken, err := setup.TelegramBotToken()
+	tgBotToken, err := setup.TelegramBotToken(logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
+		return
 	}
-	tgClient := telegram.New(tgBotToken)
+	tgClient := telegram.NewClient(tgBotToken, logger)
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
@@ -32,21 +30,19 @@ func main() {
 	defer func() {
 		err := redisClient.Close()
 		if err != nil {
-			log.Printf("Error closing Redis client: %v", err)
+			logger.Error("Error closing Redis client", "err", err)
 		}
 	}()
-	dbForLastUpdateID := last_update_id.NewLastUpdateIDRedisClient(redisClient)
-	dbForUser := user.NewRedisClient(redisClient)
+	dbForLastUpdateID := last_update_id.NewLastUpdateIDRedisClient(redisClient, logger)
+	dbForUser := user.NewRedisClient(redisClient, logger)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log.Println("App started")
+	logger.Info("App started")
 
-	process := app.New(tgClient, &dbForLastUpdateID, dbForUser)
-	if err := process.Run(ctx); err != nil {
-		log.Panic(err)
-	}
+	process := app.NewApp(tgClient, &dbForLastUpdateID, dbForUser, logger)
+	process.Run(ctx)
 
-	log.Println("App stopped")
+	logger.Info("App stopped")
 }

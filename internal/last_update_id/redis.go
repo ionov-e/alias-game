@@ -3,27 +3,28 @@ package last_update_id
 import (
 	"context"
 	"errors"
-	"fmt"                          //nolint:goimports,goimports
+	"fmt"                          //nolint:nolintlint,goimports
 	"github.com/redis/go-redis/v9" //nolint:nolintlint,goimports
-	"log"                          //nolint:nolintlint,goimports
-	"time"
+	"log/slog"
+	"time" //nolint:nolintlint,goimports
 )
 
 const lastUpdateIDKey = "last-update-id"
 
 type LastUpdateIDRedisClient struct {
 	client *redis.Client
+	log    *slog.Logger
 }
 
-func NewLastUpdateIDRedisClient(client *redis.Client) LastUpdateIDRedisClient {
-	return LastUpdateIDRedisClient{client: client}
+func NewLastUpdateIDRedisClient(client *redis.Client, log *slog.Logger) LastUpdateIDRedisClient {
+	return LastUpdateIDRedisClient{client: client, log: log}
 }
 
 func (r *LastUpdateIDRedisClient) LastUpdateID(ctx context.Context) (uint64, error) {
 	lastUpdateID, err := r.client.Get(ctx, lastUpdateIDKey).Uint64()
 
 	if errors.Is(err, redis.Nil) {
-		log.Println("No lastUpdateID in redis")
+		r.log.Warn("No lastUpdateID in redis")
 		return uint64(0), nil
 	}
 

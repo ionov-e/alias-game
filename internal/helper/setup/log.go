@@ -1,23 +1,60 @@
 package setup
 
 import (
+	"errors"
 	"fmt"
-	"log"
-	"os" //nolint:nolintlint,goimports
+	slogmulti "github.com/samber/slog-multi"
+	"log/slog"
+	"os"
+	"path/filepath"
 	"time"
 )
 
-func Logging() error {
-	t := time.Now()
-	logDir := "log/" + t.Format("2006/01")
-	if err := os.MkdirAll(logDir, 0777); err != nil {
-		return fmt.Errorf("creating log dir failed: %w", err)
-	}
-	logPath := logDir + "/" + t.Format("02") + ".log"
-	file, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+func GetLogger(isDebug bool) *slog.Logger {
+	projDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("opening log file failed: %w", err)
+		panic(err)
 	}
-	log.SetOutput(file) // TODO slog or implement similar
-	return nil
+
+	logDir := filepath.Join(projDir, "logs")
+
+	if _, err := os.Stat(logDir); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+
+	logFilename := filepath.Join(logDir, time.Now().Format("2006-01-02")+".log")
+
+	logFile, err := os.OpenFile(logFilename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic(fmt.Errorf("failed to open file '%s' %w", logFilename, err))
+	}
+
+	level := slog.LevelInfo
+	if isDebug {
+		level = slog.LevelDebug
+	}
+
+	replace := func(groups []string, a slog.Attr) slog.Attr {
+		// Remove the directory from the source's filename.
+		if a.Key == slog.SourceKey {
+			source := a.Value.Any().(*slog.Source)
+			source.File = filepath.Base(source.File)
+		}
+		return a
+	}
+
+	opts := &slog.HandlerOptions{
+		AddSource:   true,
+		Level:       level,
+		ReplaceAttr: replace,
+	}
+	fileHandler := slog.NewJSONHandler(logFile, opts)
+
+	outHandler := slog.NewTextHandler(os.Stdout, opts)
+	logger := slog.New(slogmulti.Fanout(fileHandler, outHandler))
+	slog.SetDefault(logger)
+
+	return logger
 }

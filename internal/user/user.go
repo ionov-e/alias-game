@@ -5,7 +5,8 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"errors"
-	"fmt"
+	"fmt" //nolint:goimports
+	"log/slog"
 )
 
 const correctAnswersCountString = "Правильных ответов"
@@ -15,6 +16,7 @@ const skippedAnswersCountString = "Пропущенных ответов"
 type User struct {
 	data *data
 	db   DBForUserInterface
+	log  *slog.Logger
 }
 
 type DBForUserInterface interface {
@@ -22,12 +24,12 @@ type DBForUserInterface interface {
 	saveUserInfo(ctx context.Context, userInfo *data) error
 }
 
-func NewFromTelegramUser(ctx context.Context, db DBForUserInterface, tgUser *tgTypes.User) (*User, error) {
+func NewUserFromTelegramUser(ctx context.Context, db DBForUserInterface, log *slog.Logger, tgUser *tgTypes.User) (*User, error) {
 	info, err := db.userDataFromTelegramUser(ctx, tgUser)
 	if err != nil {
 		return nil, fmt.Errorf("error getting data: %w", err)
 	}
-	return &User{data: info, db: db}, nil
+	return &User{data: info, db: db, log: log}, nil
 }
 
 func (u *User) TelegramID() int64 {

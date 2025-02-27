@@ -7,7 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 const startMessage = "Старт"
@@ -15,12 +15,14 @@ const startMessage = "Старт"
 type Start0 struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
-func NewStart0(tgClient *telegram.Client, u *user.User) Start0 {
+func NewStart0(tgClient *telegram.Client, u *user.User, log *slog.Logger) Start0 {
 	return Start0{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -31,16 +33,15 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in Start0 changing current menu: %w", err)
 		}
-		newMenu := NewSetRoundTimePredefined(m.tgClient, m.user)
+		newMenu := NewSetRoundTimePredefined(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in Start0: %w", err)
 		}
 		return nil
 	default:
-		errMessage := fmt.Sprintf("Неизвестная команда: '%s'", message)
-		log.Printf("%s for user: %d in Start0", errMessage, m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		m.log.Debug("unknown command in Start0", "message", message, "user_id", m.user.TelegramID())
+		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
 		}
@@ -48,7 +49,7 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s' in Start0, failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in Start0", message)
+		return nil
 	}
 }
 

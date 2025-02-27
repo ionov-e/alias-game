@@ -7,7 +7,7 @@ import (
 	tgTypes "alias-game/pkg/telegram/types"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 const nextInCurrentGameMessage = "Продолжить"
@@ -16,12 +16,14 @@ const startAnewMessage = "Прекратить текущую игру"
 type CurrentGameResult struct {
 	tgClient *telegram.Client
 	user     *user.User
+	log      *slog.Logger
 }
 
-func NewCurrentGameResult(tgClient *telegram.Client, u *user.User) CurrentGameResult {
+func NewCurrentGameResult(tgClient *telegram.Client, u *user.User, log *slog.Logger) CurrentGameResult {
 	return CurrentGameResult{
 		tgClient: tgClient,
 		user:     u,
+		log:      log,
 	}
 }
 
@@ -32,7 +34,7 @@ func (m CurrentGameResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in CurrentGameResult changing current menu: %w", err)
 		}
-		newMenu := NewNextRoundSuggestion(m.tgClient, m.user)
+		newMenu := NewNextRoundSuggestion(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in CurrentGameResult: %w", err)
@@ -43,16 +45,15 @@ func (m CurrentGameResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed in CurrentGameResult changing current menu: %w", err)
 		}
-		newMenu := NewStart0(m.tgClient, m.user)
+		newMenu := NewStart0(m.tgClient, m.user, m.log)
 		err = newMenu.sendDefaultMessage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed sending message in CurrentGameResult: %w", err)
 		}
 		return nil
 	default:
-		errMessage := fmt.Sprintf("Неизвестная комманда: '%s'", message)
-		log.Printf("%s for user: %d in CurrentGameResult", errMessage, m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), errMessage)
+		m.log.Debug("unknown command in CurrentGameResult", "message", message, "user_id", m.user.TelegramID())
+		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in CurrentGameResult: %w", message, err)
 		}
@@ -60,7 +61,7 @@ func (m CurrentGameResult) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("unexpected answer '%s', failed to send message: %w", message, err)
 		}
-		return fmt.Errorf("unexpected answer '%s' in CurrentGameResult", message)
+		return nil
 	}
 }
 

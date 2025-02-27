@@ -7,7 +7,7 @@ import (
 	"alias-game/pkg/telegram"
 	"context"
 	"fmt" //nolint:nolintlint,goimports
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -21,42 +21,45 @@ type App struct {
 	tgClient       *telegram.Client
 	lastUpdateIDDB lastUpdateIDDBInterface
 	userDB         user.DBForUserInterface
+	log            *slog.Logger
 }
 
-func New(
+func NewApp(
 	tgClient *telegram.Client,
 	lastUpdateIDDB lastUpdateIDDBInterface,
 	userDB user.DBForUserInterface,
+	log *slog.Logger,
 ) App {
 	return App{
 		tgClient:       tgClient,
 		lastUpdateIDDB: lastUpdateIDDB,
 		userDB:         userDB,
+		log:            log,
 	}
 }
 
-func (a *App) Run(ctx context.Context) error { // TODO no return
+func (a *App) Run(ctx context.Context) {
 	offsetAsUpdateID, err := a.lastUpdateIDDB.LastUpdateID(ctx)
 	if err != nil {
-		return fmt.Errorf("failed at getting lastUpdateID: %w", err)
+		a.log.Error("failed LastUpdateID", slog.String("err", err.Error()))
+		return
 	}
 
 	for {
 		updates, err := a.tgClient.GetUpdates(ctx, offsetAsUpdateID, 10, 0)
 		if err != nil {
-			return fmt.Errorf("failed at getting telegram-updates: %w", err)
+			a.log.Error(fmt.Sprintf("failed at getting telegram-updates: %+v", err))
+			return
 		}
 		if len(updates) == 0 {
 			time.Sleep(time.Second * 1)
 			continue
 		}
-
 		offsetAsUpdateID = updates[len(updates)-1].UpdateID + 1 // Adds 1 to get the next update
-
 		if err := a.lastUpdateIDDB.SaveLastUpdateID(ctx, offsetAsUpdateID); err != nil {
-			return fmt.Errorf("failed at setting lastUpdateID: %w", err)
+			a.log.Error(fmt.Sprintf("failed at setting lastUpdateID: %+v", err))
+			return
 		}
-
 		var wg sync.WaitGroup
 	loopUpdates:
 		for _, tgUpdate := range updates {
@@ -70,24 +73,32 @@ func (a *App) Run(ctx context.Context) error { // TODO no return
 
 					tgUser, text, err := telegram_type.ExtractUserFromUpdate(tgUpdate)
 					if err != nil {
-						log.Printf("failed at extracting from tgUpdate: %+v, error: %v", tgUpdate, err)
+						a.log.Error(
+							"failed ExtractUserFromUpdate",
+							slog.Any("tgUpdate", tgUpdate),
+							slog.String("err", err.Error()),
+						)
 						return
 					}
 
-					u, err := user.NewFromTelegramUser(ctx, a.userDB, tgUser)
+					u, err := user.NewUserFromTelegramUser(ctx, a.userDB, a.log, tgUser)
 					if err != nil {
-						log.Printf("error getting u from Update.CallbackQuery: %v", err)
+						a.log.Error("failed NewUserFromTelegramUser", slog.String("err", err.Error()))
 						return
 					}
 
-					menu, err := menu_factory.MenuFactory(a.tgClient, u)
+					menu, err := menu_factory.MenuFactory(a.tgClient, u, a.log)
 					if err != nil {
-						log.Printf("error getting choice from CallbackQuery.Message.Text: %v", err)
+						a.log.Error("failed MenuFactory", slog.String("err", err.Error()))
 						return
 					}
 
 					if err = menu.Respond(ctx, text); err != nil {
-						log.Printf("failed at responding to tgUpdate: %+v, error: %v", tgUpdate, err)
+						a.log.Error(
+							"failed menu.Respond",
+							slog.Any("tgUpdate", tgUpdate),
+							slog.String("err", err.Error()),
+						)
 						return
 					}
 				}()
