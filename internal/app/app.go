@@ -2,9 +2,9 @@ package app
 
 import (
 	"alias-game/internal/helper/menu_factory"
-	"alias-game/internal/helper/telegram_type"
 	"alias-game/internal/user"
 	"alias-game/pkg/telegram"
+	tgHelper "alias-game/pkg/telegram/helper"
 	"context"
 	"fmt" //nolint:nolintlint,goimports
 	"log/slog"
@@ -71,7 +71,7 @@ func (a *App) Run(ctx context.Context) {
 				go func() {
 					defer wg.Done()
 
-					tgUser, text, err := telegram_type.ExtractUserFromUpdate(tgUpdate)
+					tgUser, text, err := tgHelper.ExtractUserFromUpdate(tgUpdate)
 					if err != nil {
 						a.log.Error(
 							"failed ExtractUserFromUpdate",
