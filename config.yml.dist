@@ -6,8 +6,8 @@ telegram:
   # Bot token (required)
   token: ""
 
-# Worker pool configuration
-worker-pool-size: 100
+# Concurrency configuration
+concurrency-limit: 100
 
 # Redis configuration
 redis:

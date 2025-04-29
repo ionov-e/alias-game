@@ -50,21 +50,11 @@ func (a *App) Run(ctx context.Context) {
 		return
 	}
 
-	// Буферизованный канал для задач
-	taskQueue := make(chan func(), a.config.WorkerPoolSize)
-	defer close(taskQueue)
-
-	// Запуск пула воркеров
 	var wg sync.WaitGroup
-	for i := 0; i < a.config.WorkerPoolSize; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for task := range taskQueue {
-				task() // Выполнение
-			}
-		}()
-	}
+
+	// Семафор для ограничения количество воркеров
+	concurrencyLimiter := make(chan struct{}, a.config.ConcurrencyLimit)
+	defer close(concurrencyLimiter)
 
 	// Основной цикл обработки обновлений
 mainLoop:
@@ -94,44 +84,15 @@ mainLoop:
 				case <-ctx.Done():
 					break mainLoop
 				default:
-					task := func(tgUpdate tgType.Update) func() {
-						return func() {
-							tgUser, text, err := tgHelper.ExtractUserFromUpdate(tgUpdate)
-							if err != nil {
-								a.log.Error(
-									"failed ExtractUserFromUpdate",
-									slog.Any("tgUpdate", tgUpdate),
-									slog.String("err", err.Error()),
-								)
-								return
-							}
-							u, err := user.NewUserFromTelegramUser(ctx, a.userDB, a.log, tgUser)
-							if err != nil {
-								a.log.Error("failed NewUserFromTelegramUser", slog.String("err", err.Error()))
-								return
-							}
-							menu, err := menu_factory.MenuFactory(a.tgClient, u, a.log)
-							if err != nil {
-								a.log.Error("failed MenuFactory", slog.String("err", err.Error()))
-								return
-							}
-							if err = menu.Respond(ctx, text); err != nil {
-								a.log.Error(
-									"failed menu.Respond",
-									slog.Any("tgUpdate", tgUpdate),
-									slog.String("err", err.Error()),
-								)
-								return
-							}
-						}
+					concurrencyLimiter <- struct{}{}
+					wg.Add(1)
+					go func(update tgType.Update) {
+						defer func() {
+							wg.Done()
+							<-concurrencyLimiter
+						}()
+						a.processUpdate(ctx, update)
 					}(tgUpdate)
-
-					// Отправка задачи в канал задач
-					select {
-					case taskQueue <- task:
-					case <-ctx.Done():
-						break mainLoop
-					}
 				}
 			}
 		}
@@ -140,4 +101,34 @@ mainLoop:
 	wg.Wait()
 
 	//TODO Queue for end_round messages (results)
+}
+
+func (a *App) processUpdate(ctx context.Context, tgUpdate tgType.Update) {
+	tgUser, text, err := tgHelper.ExtractUserFromUpdate(tgUpdate)
+	if err != nil {
+		a.log.Error(
+			"failed ExtractUserFromUpdate",
+			slog.Any("tgUpdate", tgUpdate),
+			slog.String("err", err.Error()),
+		)
+		return
+	}
+	u, err := user.NewUserFromTelegramUser(ctx, a.userDB, a.log, tgUser)
+	if err != nil {
+		a.log.Error("failed NewUserFromTelegramUser", slog.String("err", err.Error()))
+		return
+	}
+	menu, err := menu_factory.MenuFactory(a.tgClient, u, a.log)
+	if err != nil {
+		a.log.Error("failed MenuFactory", slog.String("err", err.Error()))
+		return
+	}
+	if err = menu.Respond(ctx, text); err != nil {
+		a.log.Error(
+			"failed menu.Respond",
+			slog.Any("tgUpdate", tgUpdate),
+			slog.String("err", err.Error()),
+		)
+		return
+	}
 }

@@ -11,8 +11,8 @@ type Config struct {
 	Telegram struct {
 		Token string `yaml:"token" env-required:"true"`
 	} `yaml:"telegram"`
-	WorkerPoolSize int `yaml:"worker-pool-size" env-required:"true"`
-	Redis          struct {
+	ConcurrencyLimit int `yaml:"concurrency-limit" env-required:"true"`
+	Redis            struct {
 		Address  string `yaml:"address" env-required:"true"`
 		Password string `yaml:"password"`
 		DB       int    `yaml:"db"`
