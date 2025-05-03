@@ -47,6 +47,18 @@ func (r *RedisClient) userDataFromTelegramUser(ctx context.Context, u *tgTypes.U
 	return &newUserInfo, nil
 }
 
+func (r *RedisClient) userDataFromTelegramUserID(ctx context.Context, tgUserID int64) (*data, error) {
+	var info data
+	key := r.keyForUserInfo(tgUserID)
+	err := r.client.Get(ctx, key).Scan(&info)
+
+	if !errors.Is(err, redis.Nil) {
+		return &info, nil
+	}
+
+	return nil, fmt.Errorf("failed getting user from redis with key %s: %w", tgUserID, err)
+}
+
 func (r *RedisClient) saveUserInfo(ctx context.Context, userInfo *data) error {
 	key := r.keyForUserInfo(userInfo.TelegramID)
 

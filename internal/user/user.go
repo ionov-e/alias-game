@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt" //nolint:goimports
 	"log/slog"
+	"time"
 )
 
 const correctAnswersCountString = "Правильных ответов"
@@ -21,6 +22,7 @@ type User struct {
 
 type DBForUserInterface interface {
 	userDataFromTelegramUser(ctx context.Context, user *tgTypes.User) (*data, error)
+	userDataFromTelegramUserID(ctx context.Context, tgUserID int64) (*data, error)
 	saveUserInfo(ctx context.Context, userInfo *data) error
 }
 
@@ -30,6 +32,15 @@ func NewUserFromTelegramUser(ctx context.Context, db DBForUserInterface, log *sl
 		return nil, fmt.Errorf("error getting data: %w", err)
 	}
 	return &User{data: info, db: db, log: log}, nil
+}
+
+func NewUpdatedUser(ctx context.Context, outdatedUser *User) (*User, error) {
+	updatedData, err := outdatedUser.db.userDataFromTelegramUserID(ctx, outdatedUser.data.TelegramID)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting updated data for user: %w", err)
+	}
+
+	return &User{data: updatedData, db: outdatedUser.db, log: outdatedUser.log}, nil
 }
 
 func (u *User) TelegramID() int64 {
@@ -51,6 +62,14 @@ func (u *User) ChangeCurrentMenu(ctx context.Context, menuKey menuConstant.Key) 
 	return nil
 }
 
+func (u *User) PreferenceRoundTimeInSeconds() uint16 {
+	return u.data.PreferenceRoundTime
+}
+
+func (u *User) RoundStartTime() time.Time {
+	return u.data.RoundStartTime
+}
+
 func (u *User) CurrentWord() (string, error) {
 	word, err := u.data.word(u.data.RoundWordNumber)
 	if err != nil {
@@ -63,8 +82,22 @@ func (u *User) SetCurrentWordResult(result WordResult) {
 	u.data.setRoundWordResult(u.data.RoundWordNumber, result)
 }
 
+func (u *User) StartNewRound(ctx context.Context) error {
+	u.data.RoundStartTime = time.Now()
+	err := u.ChangeCurrentMenu(ctx, menuConstant.Word)
+	if err != nil {
+		return fmt.Errorf("failed setting Word Menu in StartNewRound: %w", err)
+	}
+	return nil
+}
+
 func (u *User) ConcludeRound(ctx context.Context) (roundResults string, err error) {
 	u.data.addLastRequest()
+
+	err = u.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
+	if err != nil {
+		return "", fmt.Errorf("failed in ConcludeRound changing current menu: %w", err)
+	}
 
 	correctAnswers := 0
 	incorrectAnswers := 0
@@ -114,6 +147,12 @@ func (u *User) ConcludeRound(ctx context.Context) (roundResults string, err erro
 	}
 
 	return msg, nil
+}
+
+func (u *User) IsStillSameGuessingRound(roundStartTimeBeforeAfterFuncExecution time.Time) bool {
+	stillWordMenu := u.data.CurrentMenu == string(menuConstant.Word)
+	stillSameRound := roundStartTimeBeforeAfterFuncExecution.Equal(u.data.RoundStartTime)
+	return stillWordMenu && stillSameRound
 }
 
 func (u *User) AllTeamsCount() uint16 {

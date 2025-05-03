@@ -35,11 +35,20 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 	case nextInWordGuessMessage:
 		return w.saveWordResultAndGoToNextWord(ctx, user.Skipped)
 	case endRoundMessage:
-		// TODO stop timer
-		err := w.user.ChangeCurrentMenu(ctx, menuConstant.RoundResult)
+		// Check if round has ended (afterFunc has executed after round time end)
+		updatedUser, err := user.NewUpdatedUser(ctx, w.user)
 		if err != nil {
-			return fmt.Errorf("failed in WordGuess changing current menu: %w", err)
+			return fmt.Errorf("in WordGuess failed NewUpdatedUser (userId %d): %w", w.user.TelegramID(), err)
 		}
+		if !updatedUser.IsStillSameGuessingRound(w.user.RoundStartTime()) { // Check if round has ended
+			w.log.Info("in AfterFunc round has ended before", "user_id", w.user.TelegramID())
+			err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), fmt.Sprintf("Время раунда истекло"))
+			if err != nil {
+				return fmt.Errorf("unexpected message '%s', failed to send text message in WordGuess: %w", message, err)
+			}
+			return nil
+		}
+
 		roundResults, err := w.user.ConcludeRound(ctx)
 		if err != nil {
 			return fmt.Errorf("failed ConcludeRound for user: %d): %w", w.user.TelegramID(), err)
