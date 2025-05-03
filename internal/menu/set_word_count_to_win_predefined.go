@@ -40,7 +40,7 @@ func (m SetWordCountToWinPredefined) Respond(ctx context.Context, message string
 	//TODO suggest Manual input
 	default:
 		m.log.Debug("unknown command in SetWordCountToWinPredefined", "message", message, "user_id", m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
+		_, err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in SetWordCountToWinPredefined: %w", message, err)
 		}

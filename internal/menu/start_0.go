@@ -41,7 +41,7 @@ func (m Start0) Respond(ctx context.Context, message string) error {
 		return nil
 	default:
 		m.log.Debug("unknown command in Start0", "message", message, "user_id", m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
+		_, err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in Start0: %w", message, err)
 		}

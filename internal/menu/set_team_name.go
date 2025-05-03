@@ -25,7 +25,7 @@ func NewSetTeamName(tgClient *telegram.Client, u *user.User, log *slog.Logger) S
 
 func (m SetTeamName) Respond(ctx context.Context, message string) error {
 	if len(message) == 0 {
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), "Введено пустое имя")
+		_, err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), "Введено пустое имя")
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in SetTeamName: %w", message, err)
 		}
@@ -37,7 +37,7 @@ func (m SetTeamName) Respond(ctx context.Context, message string) error {
 	}
 
 	if len(message) > 20 {
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), "Имя команды слишком длинное")
+		_, err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), "Имя команды слишком длинное")
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in SetTeamName: %w", message, err)
 		}
@@ -80,7 +80,7 @@ func (m SetTeamName) sendDefaultMessage(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error InfoForFillingTeamNames in SetTeamName: %w", err)
 	}
-	err = m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Выбор названия команды (до 20 символов) для команды №%d", firstTeamNumberWithoutName+1))
+	_, err = m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Выбор названия команды (до 20 символов) для команды №%d", firstTeamNumberWithoutName+1))
 	if err != nil {
 		return fmt.Errorf("failed sending message: %w", err)
 	}

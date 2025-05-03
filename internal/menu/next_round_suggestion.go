@@ -46,7 +46,7 @@ func (m NextRoundSuggestion) Respond(ctx context.Context, message string) error 
 		return nil
 	default:
 		m.log.Debug("unknown command in NextRoundSuggestion", "message", message, "user_id", m.user.TelegramID())
-		err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
+		_, err := m.tgClient.SendTextMessage(ctx, m.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in NextRoundSuggestion: %w", message, err)
 		}
@@ -77,7 +77,7 @@ func (m NextRoundSuggestion) concludeRoundIfUserHasNotAlready(ctx context.Contex
 		return
 	}
 
-	err = m.tgClient.SendTextMessage(
+	_, err = m.tgClient.SendTextMessage(
 		ctx,
 		updatedUser.TelegramID(),
 		fmt.Sprintf("Результат раунда:\n%s", roundResults),

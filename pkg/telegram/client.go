@@ -43,52 +43,52 @@ func (c *Client) SendOneTimeReplyMarkup(ctx context.Context, chatID int64, text 
 	return nil
 }
 
-func (c *Client) SendTextMessage(ctx context.Context, chatID int64, text string) error {
-	_, err := c.SendMessage(ctx, types.SendMessage{
+func (c *Client) SendTextMessage(ctx context.Context, chatID int64, text string) (*types.MessageResponse, error) {
+	messageResponse, err := c.SendMessage(ctx, types.SendMessage{
 		ChatID: chatID,
 		Text:   text,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to send text message: chatID=%d, text=%s, error=%w", chatID, text, err)
+		return nil, fmt.Errorf("failed to send text message: chatID=%d, text=%s, error=%w", chatID, text, err)
 	}
-	return nil
+	return messageResponse, nil
 }
 
-func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (types.MessageResponse, error) {
+func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (*types.MessageResponse, error) {
 	var messageResponse types.MessageResponse
 
 	if message.ChatID == 0 {
-		return messageResponse, errors.New("chat id is required")
+		return nil, errors.New("chat id is required")
 	}
 
 	if message.Text == "" {
-		return messageResponse, errors.New("text is required")
+		return nil, errors.New("text is required")
 	}
 
 	data, err := message.Bytes()
 	if err != nil {
-		return messageResponse, fmt.Errorf("SendMessage Bytes failed: %w", err)
+		return nil, fmt.Errorf("SendMessage Bytes failed: %w", err)
 	}
 
 	responseBytes, err := c.sendRequest(ctx, "sendMessage", data)
 	if err != nil {
-		return messageResponse, fmt.Errorf("send message failed: %w", err)
+		return nil, fmt.Errorf("send message failed: %w", err)
 	}
 
 	err = json.Unmarshal(responseBytes, &messageResponse)
 	if err != nil {
 		c.log.Info(fmt.Sprintf("Failed to unmarshal response: %s", string(responseBytes)))
-		return messageResponse, fmt.Errorf("failed to parse response: %w", err)
+		return &messageResponse, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	if !messageResponse.Ok {
 		if messageResponse.Description != "" {
-			return messageResponse, errors.New("telegram error sending message: " + messageResponse.Description)
+			return &messageResponse, errors.New("telegram error sending message: " + messageResponse.Description)
 		}
-		return messageResponse, errors.New("telegram error sending message: No Description present in response")
+		return &messageResponse, errors.New("telegram error sending message: No Description present in response")
 	}
 
-	return messageResponse, nil
+	return &messageResponse, nil
 }
 
 // GetUpdates https://core.telegram.org/bots/api#getupdates

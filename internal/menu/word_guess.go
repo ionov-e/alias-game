@@ -42,7 +42,7 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 		}
 		if !updatedUser.IsStillSameGuessingRound(w.user.RoundStartTime()) { // Check if round has ended
 			w.log.Info("in AfterFunc round has ended before", "user_id", w.user.TelegramID())
-			err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), fmt.Sprintf("Время раунда истекло"))
+			_, err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), fmt.Sprintf("Время раунда истекло"))
 			if err != nil {
 				return fmt.Errorf("unexpected message '%s', failed to send text message in WordGuess: %w", message, err)
 			}
@@ -53,7 +53,7 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 		if err != nil {
 			return fmt.Errorf("failed ConcludeRound for user: %d): %w", w.user.TelegramID(), err)
 		}
-		err = w.tgClient.SendTextMessage(
+		_, err = w.tgClient.SendTextMessage(
 			ctx,
 			w.user.TelegramID(),
 			fmt.Sprintf("Результат раунда:\n%s", roundResults),
@@ -69,7 +69,7 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 		return nil
 	default:
 		w.log.Debug("unknown command in WordGuess", "message", message, "user_id", w.user.TelegramID())
-		err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
+		_, err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), fmt.Sprintf("Неизвестная комманда: '%s'", message))
 		if err != nil {
 			return fmt.Errorf("unexpected message '%s', failed to send text message in WordGuess: %w", message, err)
 		}
