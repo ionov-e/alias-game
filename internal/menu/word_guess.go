@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 )
 
 type WordGuess struct {
@@ -19,6 +20,8 @@ type WordGuess struct {
 const rightMessage = "Верно"
 const nextInWordGuessMessage = "Следующее"
 const endRoundMessage = "Закончить раунд"
+
+const timeLeftInSecondsMessage = "⏱️Осталось секунд"
 
 func NewWordGuess(tgClient *telegram.Client, u *user.User, log *slog.Logger) WordGuess {
 	return WordGuess{
@@ -82,7 +85,12 @@ func (w WordGuess) Respond(ctx context.Context, message string) error {
 }
 
 func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
-	// TODO Send time left
+	messageWithTimeLeft, err := w.tgClient.SendTextMessage(ctx, w.user.TelegramID(), fmt.Sprintf("%s: %d", timeLeftInSecondsMessage, w.user.RoundTimeLeftInSeconds()))
+	if err != nil {
+		return fmt.Errorf("failed to send text messageWithTimeLeft in WordGuess: %w", err)
+	}
+	w.updateOrDeleteEveryFewSecondsMessageWithTimeLeft(ctx, w.user.CurrenRoundWordNumber(), messageWithTimeLeft.Result.MessageID)
+
 	word, err := w.user.CurrentWord()
 	if err != nil {
 		return fmt.Errorf("failed getting CurrentWord: %w", err)
@@ -99,6 +107,36 @@ func (w WordGuess) sendDefaultMessage(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (w WordGuess) updateOrDeleteEveryFewSecondsMessageWithTimeLeft(
+	ctx context.Context,
+	roundWordNumberForMessage uint16,
+	messageIDWithTimeLeft int64,
+) {
+	time.AfterFunc(3*time.Second, func() {
+		updatedUser, err := user.NewUpdatedUser(ctx, w.user)
+		if err != nil {
+			w.log.Error("in updateOrDeleteEveryFewSecondsMessageWithTimeLeft failed NewUpdatedUser: %w", err, "user_id", w.user.TelegramID())
+			return
+		}
+
+		// Delete message if round has ended or new word has been already given
+		if !updatedUser.IsStillSameGuessingRound(w.user.RoundStartTime()) || roundWordNumberForMessage != updatedUser.CurrenRoundWordNumber() {
+			_, err = w.tgClient.DeleteMessage(ctx, w.user.TelegramID(), messageIDWithTimeLeft)
+			if err != nil {
+				w.log.Error("failed to delete messageWithTimeLeft in WordGuess", "error", err)
+			}
+			return
+		}
+
+		// Update message
+		_, err = w.tgClient.UpdateMessageText(ctx, w.user.TelegramID(), messageIDWithTimeLeft, fmt.Sprintf("%s: %d", timeLeftInSecondsMessage, updatedUser.RoundTimeLeftInSeconds()))
+		if err != nil {
+			w.log.Error("failed to delete messageWithTimeLeft in WordGuess", "error", err)
+		}
+		w.updateOrDeleteEveryFewSecondsMessageWithTimeLeft(ctx, roundWordNumberForMessage, messageIDWithTimeLeft)
+	})
 }
 
 func (w WordGuess) saveWordResultAndGoToNextWord(ctx context.Context, result user.WordResult) error {

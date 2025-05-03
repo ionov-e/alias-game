@@ -51,6 +51,10 @@ func (u *User) CurrentMenuKey() string {
 	return u.data.CurrentMenu
 }
 
+func (u *User) CurrenRoundWordNumber() uint16 {
+	return u.data.RoundWordNumber
+}
+
 func (u *User) ChangeCurrentMenu(ctx context.Context, menuKey menuConstant.Key) error {
 	u.LastRoundResult()
 	newMenuKey := string(menuKey)
@@ -76,6 +80,11 @@ func (u *User) CurrentWord() (string, error) {
 		return "", fmt.Errorf("failed getting current word: %w", err)
 	}
 	return word, nil
+}
+
+func (u *User) RoundTimeLeftInSeconds() uint16 {
+	secondsPastFromRoundStart := time.Now().Sub(u.data.RoundStartTime).Seconds()
+	return u.data.PreferenceRoundTime - uint16(secondsPastFromRoundStart)
 }
 
 func (u *User) SetCurrentWordResult(result WordResult) {

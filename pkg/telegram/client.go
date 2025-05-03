@@ -91,6 +91,73 @@ func (c *Client) SendMessage(ctx context.Context, message types.SendMessage) (*t
 	return &messageResponse, nil
 }
 
+func (c *Client) UpdateMessageText(ctx context.Context, chatID int64, messageID int64, newText string) (bool, error) {
+	messageToSend := types.EditMessageText{
+		ChatID:    chatID,
+		MessageID: messageID,
+		Text:      newText,
+	}
+
+	messageToSendInBytes, err := messageToSend.Bytes()
+	if err != nil {
+		return false, fmt.Errorf("UpdateMessageText Bytes failed: %w", err)
+	}
+
+	responseBytes, err := c.sendRequest(ctx, "editMessageText", messageToSendInBytes)
+	if err != nil {
+		return false, fmt.Errorf("edit message text request failed: %w", err)
+	}
+
+	// Parse the standard Telegram response
+	var result struct {
+		OK bool `json:"ok"`
+		// On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.
+		Result any `json:"result"`
+	}
+
+	if err := json.Unmarshal(responseBytes, &result); err != nil {
+		return false, fmt.Errorf("failed to unmarshal editMessageText response: %w", err)
+	}
+
+	if !result.OK {
+		return false, fmt.Errorf("telegram API returned ok=false: %s", string(responseBytes))
+	}
+
+	return true, nil
+}
+
+func (c *Client) DeleteMessage(ctx context.Context, chatID int64, messageID int64) (bool, error) {
+	messageToSend := types.DeleteMessage{
+		ChatID:    chatID,
+		MessageID: messageID,
+	}
+
+	messageToSendInBytes, err := messageToSend.Bytes()
+	if err != nil {
+		return false, fmt.Errorf("DeleteMessage Bytes failed: %w", err)
+	}
+
+	responseBytes, err := c.sendRequest(ctx, "deleteMessage", messageToSendInBytes)
+	if err != nil {
+		return false, fmt.Errorf("delete message failed: %w", err)
+	}
+
+	var result struct {
+		OK     bool `json:"ok"`
+		Result bool `json:"result"`
+	}
+
+	if err := json.Unmarshal(responseBytes, &result); err != nil {
+		return false, fmt.Errorf("failed to unmarshal deleteMessage response: %w", err)
+	}
+
+	if !result.OK {
+		return false, fmt.Errorf("telegram API returned ok=false: %s", string(responseBytes))
+	}
+
+	return result.Result, nil
+}
+
 // GetUpdates https://core.telegram.org/bots/api#getupdates
 func (c *Client) GetUpdates(ctx context.Context, offset uint64, limit int, timeout int) ([]types.Update, error) {
 	var responseObject types.UpdateResponse
