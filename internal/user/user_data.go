@@ -9,24 +9,18 @@ import (
 
 // data is a stored value object that contains data about User
 type data struct {
-	TelegramID               int64     `json:"i"`    //nolint:tagliatelle
-	CurrentMenu              string    `json:"cm"`   //nolint:tagliatelle
-	Name                     string    `json:"n"`    //nolint:tagliatelle
-	BlockedUntil             time.Time `json:"bu"`   //nolint:tagliatelle
-	BlockedTimes             uint16    `json:"bt"`   //nolint:tagliatelle
-	LastRequestTime          time.Time `json:"lrt"`  //nolint:tagliatelle
-	FirstFrequentRequestTime time.Time `json:"ffrt"` //nolint:tagliatelle
+	TelegramID      int64     `json:"i"`   //nolint:tagliatelle
+	CurrentMenu     string    `json:"cm"`  //nolint:tagliatelle
+	Name            string    `json:"n"`   //nolint:tagliatelle
+	BlockedUntil    time.Time `json:"bu"`  //nolint:tagliatelle
+	LastRequestTime time.Time `json:"lrt"` //nolint:tagliatelle
 	// Same as in Telegram for user: IETF language tag
 	PreferenceLanguage string `json:"pl"` //nolint:tagliatelle
 	// In seconds
-	PreferenceRoundTime uint16 `json:"prt"` //nolint:tagliatelle
-	// Number of points to reduce for wrong answers
-	PreferencePenaltyCost    float32           `json:"ppc"`          //nolint:tagliatelle
-	PreferenceWordDifficulty uint8             `json:"pwd"`          //nolint:tagliatelle
-	DictionaryHistory        []dictionaryCount `json:"dc,omitempty"` //nolint:tagliatelle
-	RoundStartTime           time.Time         `json:"rst"`          //nolint:tagliatelle
-	RoundEndTime             time.Time         `json:"ret"`          //nolint:tagliatelle
-	RoundDictionaryKey       DictionaryKey     `json:"rdk"`          //nolint:tagliatelle
+	PreferenceRoundTime uint16            `json:"prt"`          //nolint:tagliatelle
+	DictionaryHistory   []dictionaryCount `json:"dc,omitempty"` //nolint:tagliatelle
+	RoundStartTime      time.Time         `json:"rst"`          //nolint:tagliatelle
+	RoundDictionaryKey  DictionaryKey     `json:"rdk"`          //nolint:tagliatelle
 	// Starts with 0 (index in RoundWords slice)
 	RoundWordNumber uint16 `json:"rwn"` //nolint:tagliatelle
 	// Starts with 0 (index in AllTeamsInfo slice)
