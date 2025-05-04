@@ -17,3 +17,9 @@ redis:
   password: ""
   # Redis database number (required)
   db: 0
+
+# Webhook configuration
+webhook:
+  enabled: false
+  url: ""
+  port: ""

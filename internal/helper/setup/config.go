@@ -17,6 +17,11 @@ type Config struct {
 		Password string `yaml:"password"`
 		DB       int    `yaml:"db"`
 	} `yaml:"redis"`
+	Webhook struct {
+		Enabled bool   `yaml:"enabled" env-default:"false"`
+		URL     string `yaml:"url"`
+		Port    string `yaml:"port"`
+	} `yaml:"webhook"`
 }
 
 var instance *Config

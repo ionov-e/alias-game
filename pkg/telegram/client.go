@@ -185,6 +185,51 @@ func (c *Client) GetUpdates(ctx context.Context, offset uint64, limit int, timeo
 	return responseObject.Result, nil
 }
 
+func (c *Client) SetWebhook(ctx context.Context, webhookURL string) error {
+	data, err := json.Marshal(map[string]string{"url": webhookURL})
+	if err != nil {
+		return fmt.Errorf("failed to marshal SetWebhook request: %w", err)
+	}
+
+	respBytes, err := c.sendRequest(ctx, "setWebhook", data)
+	if err != nil {
+		return fmt.Errorf("failed to send setWebhook request: %w", err)
+	}
+
+	var resp struct {
+		OK          bool   `json:"ok"`
+		Description string `json:"description,omitempty"`
+	}
+	if err := json.Unmarshal(respBytes, &resp); err != nil {
+		return fmt.Errorf("failed to unmarshal setWebhook response: %w", err)
+	}
+	if !resp.OK {
+		return fmt.Errorf("telegram API error: %s", resp.Description)
+	}
+
+	return nil
+}
+
+func (c *Client) DeleteWebhook(ctx context.Context) error {
+	respBytes, err := c.sendRequest(ctx, "deleteWebhook", nil)
+	if err != nil {
+		return fmt.Errorf("failed to send setWebhook request: %w", err)
+	}
+
+	var resp struct {
+		OK          bool   `json:"ok"`
+		Description string `json:"description,omitempty"`
+	}
+	if err := json.Unmarshal(respBytes, &resp); err != nil {
+		return fmt.Errorf("failed to unmarshal setWebhook response: %w", err)
+	}
+	if !resp.OK {
+		return fmt.Errorf("telegram API error: %s", resp.Description)
+	}
+
+	return nil
+}
+
 func (c *Client) sendRequest(ctx context.Context, method string, data []byte) (responseBytes []byte, err error) {
 	ctx, _ = context.WithTimeout(ctx, 40*time.Second) //nolint:nolintlint,govet
 
