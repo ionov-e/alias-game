@@ -73,6 +73,10 @@ func (a *App) runPolling(ctx context.Context, wg *sync.WaitGroup, concurrencyLim
 		return
 	}
 
+	if !a.checkWithTestMessage(ctx, "polling") {
+		return
+	}
+
 mainLoop:
 	for {
 		select {
@@ -118,6 +122,10 @@ func (a *App) enableWebhook(ctx context.Context, wg *sync.WaitGroup, concurrency
 	}
 
 	go a.runWebhook(ctx, wg, concurrencyLimiter)
+
+	if !a.checkWithTestMessage(ctx, "webhook") {
+		return
+	}
 
 	<-ctx.Done()
 	wg.Wait()
@@ -168,6 +176,21 @@ func (a *App) runWebhook(ctx context.Context, wg *sync.WaitGroup, concurrencyLim
 			a.log.Error("failed to shutdown webhook server", slog.String("err", err.Error()))
 		}
 	}()
+}
+
+func (a *App) checkWithTestMessage(ctx context.Context, method string) bool {
+	testChatID := a.config.Telegram.TestChatID
+	if testChatID == 0 {
+		a.log.Warn(method + " NOT verified: no test chat id provided")
+		return true
+	}
+
+	if _, err := a.tgClient.SendTextMessage(ctx, testChatID, "✅ "+method); err != nil {
+		a.log.Error(method+" test message failed", slog.String("err", err.Error()))
+		return false
+	}
+	a.log.Info(method+" verified via test message", slog.Int64("chat_id", testChatID))
+	return true
 }
 
 func (a *App) processUpdate(ctx context.Context, tgUpdate tgType.Update, wg *sync.WaitGroup, limiter chan struct{}) {

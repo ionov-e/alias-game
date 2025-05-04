@@ -9,7 +9,8 @@ import (
 type Config struct {
 	IsDebug  bool `yaml:"debug" env-default:"true"` //nolint:tagliatelle
 	Telegram struct {
-		Token string `yaml:"token" env-required:"true"`
+		Token      string `yaml:"token" env-required:"true"`
+		TestChatID int64  `yaml:"test-chat-id"`
 	} `yaml:"telegram"`
 	ConcurrencyLimit int `yaml:"concurrency-limit" env-required:"true"`
 	Redis            struct {

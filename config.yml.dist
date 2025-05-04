@@ -5,6 +5,7 @@ debug: true
 telegram:
   # Bot token (required)
   token: ""
+  test-chat-id: ""
 
 # Concurrency configuration
 concurrency-limit: 100
